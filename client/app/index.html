@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>WorldSketch Editor</title>
+	<meta name="robots" content="noindex">
+	<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='%23111110'%3E%3Cellipse cx='9' cy='10' rx='6' ry='5.2' transform='rotate(-18 9 10)'/%3E%3Cellipse cx='17' cy='8.5' rx='3.4' ry='2.9' transform='rotate(24 17 8.5)'/%3E%3Cellipse cx='15.5' cy='16.5' rx='4.4' ry='3.6' transform='rotate(-8 15.5 16.5)'/%3E%3Ccircle cx='6.5' cy='17.5' r='2.1'/%3E%3C/g%3E%3C/svg%3E">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+	<link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css">
+	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+	<link rel="stylesheet" href="/styles.css?v=dev-chrome-1">
+	<script type="importmap">
+	{
+		"imports": {
+			"three": "/lib/three.module.min.js",
+			"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/",
+			"spark": "https://cdn.jsdelivr.net/npm/@sparkjsdev/spark@2.1.0/dist/spark.module.js",
+			"fflate": "https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js",
+			"@gradio/client": "https://cdn.jsdelivr.net/npm/@gradio/client@2.3.1/+esm",
+			"@huggingface/inference": "https://cdn.jsdelivr.net/npm/@huggingface/inference@4.13.23/+esm"
+		}
+	}
+	</script>
+	<script>
+		!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+		posthog.init('phc_vfBYNpKio4kbFsmdVxfgHQEz6Lk5YVh3uNGWznzkf6jL', {api_host: 'https://us.i.posthog.com', defaults: '2025-05-24'});
+	</script>
+</head>
+<body>
+	<div id="canvas"></div>
+	<svg class="view-transform-overlay hidden" id="view_transform_overlay" aria-hidden="true">
+		<path class="view-lasso-path hidden" id="view_lasso_path"></path>
+		<g class="view-selection-frame hidden" id="view_selection_frame">
+			<rect class="view-selection-box" id="view_selection_box"></rect>
+			<line class="view-rotate-stem" id="view_rotate_stem"></line>
+			<circle class="view-rotate-handle" id="view_rotate_handle" r="7"></circle>
+			<circle class="view-move-handle" id="view_move_handle" r="5"></circle>
+			<rect class="view-scale-handle" data-view-scale-handle="nw" width="12" height="12" rx="2"></rect>
+			<rect class="view-scale-handle" data-view-scale-handle="ne" width="12" height="12" rx="2"></rect>
+			<rect class="view-scale-handle" data-view-scale-handle="se" width="12" height="12" rx="2"></rect>
+			<rect class="view-scale-handle" data-view-scale-handle="sw" width="12" height="12" rx="2"></rect>
+		</g>
+	</svg>
+	<div class="ui">
+		<div class="view-tabs hidden" role="tablist" aria-label="Build or view the world">
+			<button class="view-tab active" data-view-tab="build" role="tab" aria-selected="true" title="Edit the block-out (splats hidden)">Build</button>
+			<button class="view-tab" data-view-tab="view" role="tab" aria-selected="false" disabled title="See and arrange the generated world">View</button>
+			<button class="view-tab" data-view-tab="play" role="tab" aria-selected="false" disabled title="Walk the generated world third-person">Play</button>
+		</div>
+		<aside class="frames-panel card bg-base-100 border border-base-300 shadow-xl" id="frames_panel" aria-label="Builds">
+			<div class="card-body">
+				<header class="frames-head">
+					<div class="frames-heading">
+						<!-- Tabler Icons "hammer" (outline) -->
+						<svg class="frames-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M11.414 10l-7.383 7.418a2.091 2.091 0 0 0 0 2.967a2.11 2.11 0 0 0 2.976 0l7.407 -7.385"></path><path d="M18.121 15.293l2.586 -2.586a1 1 0 0 0 0 -1.414l-7.586 -7.586a1 1 0 0 0 -1.414 0l-2.586 2.586a1 1 0 0 0 0 1.414l7.586 7.586a1 1 0 0 0 1.414 0z"></path></svg>
+						<h2 class="card-title" id="frames_title">Builds</h2>
+						<span class="badge badge-ghost badge-sm" id="frames_count">1</span>
+					</div>
+					<button class="frames-add btn btn-ghost btn-sm btn-square" id="frame_add_btn" type="button" aria-label="New build" title="New build">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+					</button>
+				</header>
+				<ul class="frames-list menu menu-sm" id="frames_list"></ul>
+			</div>
+		</aside>
+		<div class="side-rail bg-base-100 shadow-xl border border-base-300" role="toolbar" aria-label="Tools, colors and brush">
+			<nav class="rail-tools" aria-label="Primitive tools">
+				<button class="tool-btn btn btn-ghost btn-square active" data-tool="pointer" aria-label="Pointer" title="Pointer">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.904 17.563a1.2 1.2 0 0 0 2.228 .308l2.09 -3.093l4.907 4.907a1.067 1.067 0 0 0 1.509 0l1.047 -1.047a1.067 1.067 0 0 0 0 -1.509l-4.907 -4.907l3.113 -2.09a1.2 1.2 0 0 0 -.309 -2.228l-13.582 -3.904l3.904 13.563"></path></svg>
+				</button>
+				<button class="tool-btn btn btn-ghost btn-square" data-tool="move" aria-label="Move tool" title="Move">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9l3 3l-3 3"></path><path d="M15 12h6"></path><path d="M6 9l-3 3l3 3"></path><path d="M3 12h6"></path><path d="M9 18l3 3l3 -3"></path><path d="M12 15v6"></path><path d="M9 6l3 -3l3 3"></path><path d="M12 3v6"></path></svg>
+				</button>
+				<button class="tool-btn btn btn-ghost btn-square" data-tool="scale" aria-label="Scale tool" title="Scale">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4h4v4"></path><path d="M14 10l6 -6"></path><path d="M8 20h-4v-4"></path><path d="M4 20l6 -6"></path></svg>
+				</button>
+				<button class="tool-btn btn btn-ghost btn-square" data-tool="rotate" aria-label="Rotate tool" title="Rotate">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.05 11a8 8 0 1 1 1.95 8"></path><path d="M4 4v7h7"></path><path d="M4.05 11a8.04 8.04 0 0 1 2.35 -4.6"></path></svg>
+				</button>
+				<button class="tool-btn btn btn-ghost btn-square" data-tool="eraser" aria-label="Eraser" title="Eraser (blocks and drawn ground)">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 20h-10.5l-4.21 -4.3a1 1 0 0 1 0 -1.41l10 -10a1 1 0 0 1 1.41 0l5 5a1 1 0 0 1 0 1.41l-9.2 9.3"></path><path d="M18 13.3l-6.3 -6.3"></path></svg>
+				</button>
+				<button class="tool-btn btn btn-ghost btn-square" data-tool="paint" aria-label="Draw floor" title="Draw floor — drag an outline, then release to close and fill it">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"></path><path d="M13.5 6.5l4 4"></path></svg>
+					<span class="tool-color-dot" id="pen_color_dot" aria-hidden="true"></span>
+				</button>
+				<button class="tool-btn btn btn-ghost btn-square" data-tool="box" aria-label="Box tool" title="Box">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16.008v-8.018a1.98 1.98 0 0 0 -1 -1.717l-7 -4.008a2.016 2.016 0 0 0 -2 0l-7 4.008c-.619 .355 -1 1.01 -1 1.718v8.018c0 .709 .381 1.363 1 1.717l7 4.008a2.016 2.016 0 0 0 2 0l7 -4.008c.619 -.355 1 -1.01 1 -1.718"></path><path d="M12 22v-10"></path><path d="M12 12l8.73 -5.04"></path><path d="M3.27 6.96l8.73 5.04"></path></svg>
+				</button>
+			</nav>
+			<div class="rail-flyout" id="palette_flyout" aria-label="Colors and brush size" aria-hidden="true">
+			<div class="swatch-grid rail-colors" id="color_palette" aria-label="Color palette">
+				<button class="add-color-swatch btn btn-ghost btn-square" id="add_color_btn" aria-label="Add color" title="Add color" aria-haspopup="true" aria-expanded="false">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+				</button>
+			</div>
+			<div class="color-pop hidden" id="color_pop" role="dialog" aria-label="Add a color">
+				<div class="color-pop-sv" id="color_pop_sv">
+					<span class="color-pop-thumb" id="color_pop_sv_thumb"></span>
+				</div>
+				<div class="color-pop-hue" id="color_pop_hue">
+					<span class="color-pop-thumb" id="color_pop_hue_thumb"></span>
+				</div>
+				<div class="color-pop-row">
+					<span class="color-pop-preview" id="color_pop_preview"></span>
+					<input class="color-pop-hex" id="color_pop_hex" type="text" autocomplete="off" spellcheck="false" maxlength="7" aria-label="Hex color">
+					<button class="color-pop-add" id="color_pop_add" type="button">Add</button>
+				</div>
+			</div>
+			<span class="rail-divider" aria-hidden="true"></span>
+			<div class="brush-slider rail-brushes" id="brush_palette" aria-label="Brush size">
+				<span class="brush-size-dot" id="brush_size_dot" aria-hidden="true"></span>
+				<input type="range" id="brush_size_slider" min="0.5" max="1.75" step="0.05" value="1" aria-label="Brush size" title="Brush size">
+			</div>
+			</div>
+		</div>
+		<div class="settings-menu" id="settings_menu">
+			<button class="settings-btn btn btn-square" id="settings_btn" aria-label="Settings" aria-haspopup="true" aria-expanded="false" title="Settings">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"></path><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path></svg>
+			</button>
+			<div class="settings-popover hidden" id="settings_popover" role="menu">
+				<button class="settings-item" id="scene_shot_btn" title="Download the complete isometric scene capture used for generation">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h2l2 -2h6l2 2h2a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2"></path><path d="M9 13a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path></svg>
+					<span>Screenshot scene</span>
+				</button>
+				<label class="settings-item" id="view_raw_splat_label" title="Open one .splat/.ply file exactly as stored, without fitting, culling, or transforms">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path><path d="M7 9l5 -5l5 5"></path><path d="M12 4l0 12"></path></svg>
+					<span>View raw splat</span>
+					<input type="file" id="view_raw_splat_input" accept=".splat,.ply" hidden>
+				</label>
+				<label class="settings-item" id="upload_scene_splat_label" title="Upload one complete-scene .splat/.ply file and fit it to the current block-out">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path><path d="M7 9l5 -5l5 5"></path><path d="M12 4l0 12"></path></svg>
+					<span>Upload + fit scene</span>
+					<input type="file" id="upload_scene_splat_input" accept=".splat,.ply" hidden>
+				</label>
+				<button class="settings-item" id="download_prims_btn" title="Save the block-out primitives to a JSON file">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2"></path><path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path><path d="M14 4l0 4l-6 0l0 -4"></path></svg>
+					<span>Download primitives</span>
+				</button>
+				<label class="settings-item" id="upload_prims_label" title="Load block-out primitives from a JSON file (replaces the current block-out)">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2"></path></svg>
+					<span>Upload primitives</span>
+					<input type="file" id="upload_prims_input" accept=".json" hidden>
+				</label>
+				<button class="settings-item" id="download_zip_btn" title="Export splats + primitives as a ZIP for quick re-fitting">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path><path d="M7 11l5 5l5 -5"></path><path d="M12 4l0 12"></path></svg>
+					<span>Download session ZIP</span>
+				</button>
+				<label class="settings-item" id="upload_zip_label" title="Re-fit a previously exported ZIP to the current primitives (skips generation)">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path><path d="M7 9l5 -5l5 5"></path><path d="M12 4l0 12"></path></svg>
+					<span>Upload session ZIP</span>
+					<input type="file" id="upload_zip_input" accept=".zip" hidden>
+				</label>
+				<button class="settings-item" id="history_toggle_btn" title="Build history - restore a previous build's splats without regenerating">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8l0 4l2 2"></path><path d="M3.05 11a9 9 0 1 1 .5 4"></path><path d="M3 16v-5h5"></path></svg>
+					<span>Build history</span>
+				</button>
+				<div class="settings-divider" aria-hidden="true"></div>
+				<label class="settings-item settings-toggle" title="Overlay the original primitive colliders on the generated splats to check how well each lines up">
+					<span>Colliders</span>
+					<input type="checkbox" id="show_colliders_input" class="toggle toggle-sm">
+				</label>
+				<label class="settings-item settings-toggle" title="Draw each generated splat's content bounding box to check how it sits relative to its colliders">
+					<span>Bounds</span>
+					<input type="checkbox" id="show_splat_box_input" class="toggle toggle-sm">
+				</label>
+				<label class="settings-item settings-toggle" title="Show or hide the segmented floor piece; object and remainder pieces stay visible">
+					<span>Splat floor</span>
+					<input type="checkbox" id="show_splat_floor_input" class="toggle toggle-sm" checked>
+				</label>
+				<div class="settings-divider" aria-hidden="true"></div>
+				<button class="settings-item" id="hf_sign_out_btn" type="button" title="Return to the sign-in page and clear this tab's Hugging Face session">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5 -5l-5 -5"></path><path d="M15 12h-12"></path><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-4"></path></svg>
+					<span>Sign out</span>
+				</button>
+			</div>
+		</div>
+		<aside class="history-panel hidden" id="history_panel" aria-label="Build history">
+			<header class="history-head">
+				<span class="history-heading">Builds <span class="history-count" id="history_count"></span></span>
+				<button class="history-clear" id="history_clear_btn" type="button" title="Delete all saved builds">Clear</button>
+				<button class="history-close" id="history_close_btn" type="button" aria-label="Close build history" title="Close">x</button>
+			</header>
+			<p class="history-empty" id="history_empty">No builds yet - hit Generate and your worlds land here.</p>
+			<div class="history-list" id="history_list"></div>
+		</aside>
+		<div class="bottom-dock">
+			<div class="chat-dock">
+				<div class="gen-progress hidden" id="progress" aria-live="polite">
+					<div class="gen-progress-copy">
+						<span class="gen-progress-pulse" aria-hidden="true"></span>
+						<span class="gen-progress-label" id="progress_label">Preparing your scene…</span>
+						<span class="gen-progress-percent" id="progress_percent">0%</span>
+					</div>
+					<div class="gen-progress-track" id="progress_track" role="progressbar" aria-label="World generation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+						<span class="gen-progress-fill" id="progress_fill"></span>
+					</div>
+				</div>
+				<form class="chat-bar" id="chat_form">
+					<input class="chat-input" id="chat_prompt" type="text" autocomplete="off" placeholder="Describe your scene...">
+					<button class="chat-send btn btn-square" id="generate_btn" type="submit" aria-label="Generate world" title="Generate">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6v6a3 3 0 0 1 -3 3h-10"></path><path d="M9 18l-3 -3l3 -3"></path></svg>
+					</button>
+				</form>
+			</div>
+			<nav class="view-dock join bg-base-100 shadow-xl border border-base-300" aria-label="Splat tools">
+			<button class="tool-btn btn btn-ghost btn-square join-item active" data-view-tool="orbit" aria-label="Orbit camera" title="Orbit the camera">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"></path><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"></path></svg>
+			</button>
+			<button class="tool-btn btn btn-ghost btn-square join-item" data-view-tool="lasso" aria-label="Lasso splat objects" title="Lasso objects, then drag inside to move, a corner to scale, or the top handle to rotate">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5.5c3.5 -2.6 10.5 -2.1 13 1.5c2.5 3.7 -.8 8 -6.5 8.4c-5.4 .4 -10.8 -2 -9.8 -5.2c.8 -2.5 5 -2.8 6.6 -.6c1.7 2.3 .1 5.3 -2.1 7.1c-1.5 1.2 -2.1 2.3 -1.2 3.3"></path></svg>
+			</button>
+			</nav>
+		</div>
+		<div class="cam-bar" id="cam_bar" aria-label="Camera">
+			<button class="cam-btn" id="fly_btn" type="button" title="Fly the camera — WASD + mouse look, Esc to exit">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14l11 -11"></path><path d="M21 3l-6.5 18a.55 .55 0 0 1 -1 0l-3.5 -7l-7 -3.5a.55 .55 0 0 1 0 -1l18 -6.5"></path></svg>
+			</button>
+			<span class="cam-divider" aria-hidden="true"></span>
+			<div class="shot-chips" id="shot_chips"></div>
+			<button class="cam-btn" id="shot_add_btn" type="button" title="Add a camera shot at the current view">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h-7a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v3.5"></path><path d="M16 19h6"></path><path d="M19 16v6"></path><path d="M9 13a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path></svg>
+			</button>
+			<button class="cam-btn" id="shot_play_btn" type="button" disabled title="Play the camera path through the shots">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l13 -8z"></path></svg>
+			</button>
+			<button class="cam-btn" id="shot_export_btn" type="button" disabled title="Export the camera path as a video (records the play-through)">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 10l4.553 -2.276a1 1 0 0 1 1.447 .894v6.764a1 1 0 0 1 -1.447 .894l-4.553 -2.276v-4z"></path><path d="M3 6m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z"></path></svg>
+			</button>
+		</div>
+		<div class="fly-hint hidden" id="fly_hint">WASD move &middot; mouse look &middot; Space / Q&ndash;E up-down &middot; Shift boost &middot; scroll speed &middot; Esc exit</div>
+		<div class="fly-hint hidden" id="play_hint">WASD move &middot; Space jump &middot; Shift sprint &middot; drag look &middot; scroll zoom &middot; Esc exit</div>
+		<p class="status-toast hidden" id="status" role="alert" title="Dismiss"></p>
+	</div>
+	<script type="module" src="/scripts/editor-entry.js?v=dev-chrome-1"></script>
+</body>
+</html>

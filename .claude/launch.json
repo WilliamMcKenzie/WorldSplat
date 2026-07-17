@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "worldsplat",
+      "runtimeExecutable": "go",
+      "runtimeArgs": ["run", "."],
+      "cwd": "server",
+      "port": 8067,
+      "autoPort": true
+    }
+  ]
+}

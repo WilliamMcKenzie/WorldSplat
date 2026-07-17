@@ -1,0 +1,39 @@
+{
+	"$schema": "https://openapi.vercel.sh/vercel.json",
+	"outputDirectory": "client",
+	"rewrites": [
+		{
+			"source": "/healthz",
+			"destination": "/api/healthz"
+		}
+	],
+	"headers": [
+		{
+			"source": "/(.*)",
+			"headers": [
+				{ "key": "X-Content-Type-Options", "value": "nosniff" },
+				{ "key": "X-Frame-Options", "value": "DENY" },
+				{ "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+				{ "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+			]
+		},
+		{
+			"source": "/lib/(.*)",
+			"headers": [
+				{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
+			]
+		},
+		{
+			"source": "/assets/(.*)",
+			"headers": [
+				{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
+			]
+		},
+		{
+			"source": "/scripts/(.*)",
+			"headers": [
+				{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+			]
+		}
+	]
+}

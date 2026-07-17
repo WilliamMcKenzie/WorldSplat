@@ -1,0 +1,24 @@
+{
+  "maps": [
+    {
+      "file": "desert_sun_market.json",
+      "primitive_count": 158,
+      "ground_strokes": 4
+    },
+    {
+      "file": "frostwatch_observatory.json",
+      "primitive_count": 129,
+      "ground_strokes": 4
+    },
+    {
+      "file": "drowned_temple_ruins.json",
+      "primitive_count": 96,
+      "ground_strokes": 5
+    },
+    {
+      "file": "skyforge_courtyard.json",
+      "primitive_count": 94,
+      "ground_strokes": 4
+    }
+  ]
+}

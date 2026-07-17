@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>worldsplat — Build a world, bring it to life.</title>
+	<meta name="description" content="worldsplat turns rough sketches into explorable 3D worlds, one seamless gaussian splat at a time.">
+	<meta name="theme-color" content="#fbfbfa">
+	<meta property="og:title" content="worldsplat — Build a world, bring it to life.">
+	<meta property="og:description" content="Turn rough sketches into explorable 3D worlds, one seamless gaussian splat at a time.">
+	<meta property="og:type" content="website">
+	<meta property="og:site_name" content="worldsplat">
+	<meta name="twitter:card" content="summary">
+	<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='%23111110'%3E%3Cellipse cx='9' cy='10' rx='6' ry='5.2' transform='rotate(-18 9 10)'/%3E%3Cellipse cx='17' cy='8.5' rx='3.4' ry='2.9' transform='rotate(24 17 8.5)'/%3E%3Cellipse cx='15.5' cy='16.5' rx='4.4' ry='3.6' transform='rotate(-8 15.5 16.5)'/%3E%3Ccircle cx='6.5' cy='17.5' r='2.1'/%3E%3C/g%3E%3C/svg%3E">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="/site.css">
+	<!-- The import map must precede any modulepreload — a module load started
+	     before the map registers makes the browser discard the map entirely,
+	     and every bare "three"/"spark" import on the page fails. -->
+	<script type="importmap">
+	{
+		"imports": {
+			"three": "/lib/three.module.min.js",
+			"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/",
+			"spark": "https://cdn.jsdelivr.net/npm/@sparkjsdev/spark@2.1.0/dist/spark.module.js"
+		}
+	}
+	</script>
+	<!-- Start the heavy downloads during HTML parse — without these, nothing is
+	     fetched until the module graph (including the spark CDN import) resolves. -->
+	<link rel="modulepreload" href="/lib/three.module.min.js">
+	<link rel="modulepreload" href="/lib/three.core.min.js">
+	<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@sparkjsdev/spark@2.1.0/dist/spark.module.js">
+	<!-- Above-the-fold first: the hero splat, then the showcase world, then the
+	     below-fold reveal band at low priority (still fetched early, never ahead
+	     of what the visitor sees first). -->
+	<link rel="preload" href="/assets/hero-blockout.json" as="fetch" crossorigin>
+	<link rel="preload" href="/assets/hero-splat.ply" as="fetch" crossorigin>
+	<link rel="preload" href="/assets/japanese-courtyard-blockout.json" as="fetch" crossorigin>
+	<link rel="preload" href="/assets/japanese-courtyard.ply" as="fetch" crossorigin>
+	<link rel="preload" href="/assets/reveal-splat.ply" as="fetch" crossorigin fetchpriority="low">
+	<script>
+		!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+		posthog.init('phc_vfBYNpKio4kbFsmdVxfgHQEz6Lk5YVh3uNGWznzkf6jL', {api_host: 'https://us.i.posthog.com', defaults: '2025-05-24'});
+	</script>
+	<style>
+		main { max-width: 1440px; margin: 0 auto; padding: 0 36px; }
+
+		/* ---- hero ---- */
+		.hero {
+			display: grid;
+			grid-template-columns: 1.15fr 0.85fr;
+			gap: 48px;
+			align-items: center;
+			padding: 16px 0 36px;
+		}
+		.hero h1 {
+			font-family: "Newsreader", Georgia, "Times New Roman", serif;
+			font-size: clamp(46px, 6.2vw, 82px);
+			font-weight: 400;
+			line-height: 1.05;
+			letter-spacing: -0.012em;
+			text-wrap: balance;
+		}
+		.hero-cta { display: flex; gap: 12px; margin-top: 40px; }
+		.pill-hf {
+			height: 56px;
+			gap: 14px;
+			padding: 0 22px 0 10px;
+			border-radius: 16px;
+			font-size: 17px;
+			font-weight: 600;
+		}
+		.pill-hf .hf-badge {
+			display: grid;
+			place-items: center;
+			width: 38px;
+			height: 38px;
+			border-radius: 11px;
+			background: #ffd66b;
+			font-size: 19px;
+		}
+		.pill-hf svg {
+			width: 19px;
+			height: 19px;
+			margin-left: 6px;
+			fill: none;
+			stroke: currentColor;
+			stroke-width: 1.8;
+			stroke-linecap: round;
+			stroke-linejoin: round;
+		}
+		[data-hf-login][aria-busy="true"] { opacity: 0.7; pointer-events: none; }
+		/* GitHub pill: same stature as the HF pill, quiet outline styling. */
+		.pill-gh {
+			height: 56px;
+			gap: 10px;
+			padding: 0 22px;
+			border-radius: 16px;
+			font-size: 17px;
+			font-weight: 600;
+		}
+		.pill-gh svg { width: 21px; height: 21px; fill: currentColor; }
+		.hero-copy {
+			margin-top: 22px;
+			font-size: 18px;
+			line-height: 1.55;
+			color: var(--ink-soft);
+			max-width: 46ch;
+		}
+		.hero-error { margin-top: 14px; font-size: 14px; color: #b3261e; max-width: 46ch; }
+		.hero-error.hidden { display: none; }
+
+		/* ---- hero cursor-follower splat (right column) ---- */
+		.hero-stage {
+			position: relative;
+			height: clamp(570px, 51vw, 810px); /* 1.5× — the mech scales with its canvas */
+			overflow: hidden;
+			transform: translateY(-6%); /* sit the mech a touch higher in the hero */
+		}
+		.hero-stage canvas {
+			position: absolute;
+			inset: 0;
+			width: 100%;
+			height: 100%;
+			display: block;
+			pointer-events: none; /* ambient — it watches the cursor, never captures it */
+		}
+
+		/* ---- showcase: world on the left, copy on the right ---- */
+		/* Scroll-driven morph: the tall band supplies the scroll distance while the
+		   row stays sticky inside it; scroll progress crossfades the sketch layer
+		   out and the splat layer in. Both canvases clear fully transparent so the
+		   bg3.js pattern (mounted behind the stage) shows through around the world. */
+		.showcase-scroll { height: 300vh; margin-bottom: 28px; }
+		.showcase {
+			position: sticky;
+			top: 0;
+			height: 100vh;
+		}
+		/* The copy floats ABOVE the full-bleed canvas, pinned to the content column's
+		   right edge; pointer events fall through to the draggable world below. */
+		.showcase-copy {
+			position: absolute;
+			right: 0;
+			top: 50%;
+			transform: translateY(-50%);
+			z-index: 1;
+			text-align: right;
+			pointer-events: none;
+		}
+		.showcase-copy h2 u {
+			text-decoration-thickness: 0.045em;
+			text-underline-offset: 0.09em;
+		}
+		.showcase-copy h2 {
+			font-family: "Newsreader", Georgia, "Times New Roman", serif;
+			font-size: clamp(38px, 4.6vw, 68px);
+			font-weight: 400;
+			line-height: 1.05;
+			letter-spacing: -0.012em;
+			text-wrap: balance;
+			max-width: 14ch;
+		}
+		/* Full-bleed stage: the canvas spans the whole viewport, so a big world runs
+		   off the actual screen edge instead of being sliced at a mid-page rectangle.
+		   landing.js shifts the render window so the world sits around the left
+		   third, leaving the right side to the copy. */
+		.stage {
+			position: absolute;
+			top: 0;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 100vw;
+			height: 100%;
+			overflow: hidden;
+			touch-action: none;
+		}
+		/* Both layers are fully transparent (GL clears at alpha 0) so the bg3.js
+		   pattern behind the stage shows through; the scroll morph crossfades the
+		   two canvases' inline opacities instead of hiding one behind the other. */
+		.stage canvas {
+			position: absolute;
+			inset: 0;
+			width: 100%;
+			height: 100%;
+			display: block;
+			cursor: grab;
+			opacity: 0;
+			will-change: opacity;
+		}
+		/* Bottom (splat) layer: calib overlay mode shows it at full strength; in the
+		   normal flow landing.js drives its inline opacity with scroll. */
+		.stage canvas.base { opacity: 1; }
+		.stage canvas:active { cursor: grabbing; }
+		.stage-hint {
+			position: absolute;
+			inset: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 15px;
+			color: var(--ink-faint);
+			pointer-events: none;
+		}
+
+		/* ---- shared eyebrow (mono, technical) ---- */
+		.eyebrow {
+			font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+			font-size: 12px;
+			font-weight: 500;
+			letter-spacing: 0.22em;
+			text-transform: uppercase;
+			color: var(--ink-faint);
+		}
+
+		/* ---- scroll-reveal: the gaussian resolves from its centre ---- */
+		.reveal {
+			position: relative;
+			min-height: min(88vh, 820px);
+			/* no dividing rules — the band's background fades out at its own edges;
+			   the margin puts clear air between the courtyard and this band */
+			margin-top: 140px;
+			background: var(--paper);
+			overflow: hidden;
+			isolation: isolate;
+		}
+		/* the band's animated pixel-wave background is a WebGL canvas mounted by
+		   assets/bg_2.js — it replaced the old CSS grid + drifting-code layers */
+		/* the single 3D surface where reveal.js builds the block-out, flashes it,
+		   and radially materializes the splat — the canvas itself is never faded,
+		   the show animates block and chunk opacities instead */
+		.reveal-canvas {
+			position: absolute;
+			inset: 0;
+			width: 100%;
+			height: 100%;
+			display: block;
+			pointer-events: none;
+			z-index: 1;
+		}
+		.reveal-lead {
+			position: relative;
+			z-index: 2;
+			max-width: 1440px;
+			margin: 0 auto;
+			padding: clamp(44px, 7vw, 92px) 36px 0;
+			pointer-events: none;
+		}
+		.reveal-lead h2 {
+			font-family: "Newsreader", Georgia, "Times New Roman", serif;
+			font-size: clamp(38px, 4.6vw, 68px);
+			font-weight: 400;
+			letter-spacing: -0.012em;
+			line-height: 1.05;
+			max-width: 17ch;
+			text-wrap: balance;
+		}
+		/* Staged copy: reveal.js fades the lead in as the block-out starts building;
+		   the tail starts WITH the radial materialize and its fade spans the same
+		   3.2s (GROW_S in reveal.js), so the sentence closes as the world densifies. */
+		.reveal-lead, .reveal-tail {
+			opacity: 0;
+			transition: opacity 0.9s ease;
+		}
+		.reveal-tail { transition-duration: 3.2s; }
+		.reveal-lead.show, .reveal-tail.show { opacity: 1; }
+		/* sentence closes on the right of the gaussian — same serif voice as the hero */
+		.reveal-tail {
+			position: absolute;
+			right: clamp(12px, 2.5vw, 48px);
+			top: 82%;
+			transform: translateY(-50%);
+			z-index: 2;
+			max-width: 9ch;
+			font-family: "Newsreader", Georgia, "Times New Roman", serif;
+			font-size: clamp(38px, 4.6vw, 68px);
+			font-weight: 400;
+			letter-spacing: -0.012em;
+			line-height: 1.05;
+			text-wrap: balance;
+			pointer-events: none;
+		}
+
+		@media (max-width: 900px) {
+			main { padding: 0 20px; }
+			.hero { grid-template-columns: 1fr; gap: 28px; padding: 32px 0 28px; }
+			.hero-stage { height: 69vw; min-height: 390px; }
+			.showcase-scroll { height: 220vh; }
+			.showcase-copy { top: auto; bottom: 8vh; transform: none; }
+			.showcase-copy h2 { font-size: clamp(30px, 7vw, 44px); }
+			.reveal { min-height: 78vh; }
+			.reveal-lead { padding-left: 20px; padding-right: 20px; }
+		}
+	</style>
+</head>
+<body>
+	<header class="nav">
+		<a class="wordmark" href="/" aria-label="worldsplat home">
+			<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+				<ellipse cx="9" cy="10" rx="6" ry="5.2" transform="rotate(-18 9 10)"/>
+				<ellipse cx="17" cy="8.5" rx="3.4" ry="2.9" transform="rotate(24 17 8.5)"/>
+				<ellipse cx="15.5" cy="16.5" rx="4.4" ry="3.6" transform="rotate(-8 15.5 16.5)"/>
+				<circle cx="6.5" cy="17.5" r="2.1"/>
+			</svg>
+			worldsplat
+		</a>
+	</header>
+
+	<main>
+		<section class="hero">
+			<div>
+				<h1>Build anything,<br>bring it to life.</h1>
+				<p class="hero-copy">Powering daydreamers.<br>Turn your 3D creations into detailed splats.</p>
+				<div class="hero-cta">
+					<a class="pill pill-black pill-hf" href="/app/" data-hf-login>
+						<span class="hf-badge" aria-hidden="true">&#129303;</span>
+						<span>Continue with Hugging Face</span>
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+					</a>
+					<!-- TODO: point at the public repo once it exists -->
+					<a class="pill pill-black pill-gh" href="#" aria-label="GitHub repository">
+						<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+						<span>GitHub</span>
+					</a>
+				</div>
+				<p class="hero-error hidden" id="hero-error" role="alert"></p>
+			</div>
+			<div class="hero-stage" id="hero-stage" aria-hidden="true"></div>
+		</section>
+
+		<div class="showcase-scroll" id="showcase-scroll">
+			<section class="showcase" aria-label="Live world preview">
+				<div class="stage" id="stage">
+					<div class="stage-hint" id="stage-hint">loading world&hellip;</div>
+				</div>
+				<div class="showcase-copy">
+					<h2>You lay the blueprints, we make it <u>real</u></h2>
+				</div>
+			</section>
+		</div>
+	</main>
+
+	<section class="reveal" id="reveal" aria-label="A world is a cloud of gaussians">
+		<canvas class="reveal-canvas" id="reveal-canvas" aria-hidden="true"></canvas>
+		<div class="reveal-lead">
+			<h2>A world is</h2>
+		</div>
+		<p class="reveal-tail" aria-hidden="true">a cloud of gaussians.</p>
+	</section>
+
+	
+
+	<script type="module">
+		// The hero CTA starts Hugging Face OAuth straight away, and "/" is also
+		// the registered OAuth redirect URL — a callback hitting the landing page
+		// finishes the token exchange here and opens the editor.
+		import { getConfig } from "/scripts/api.js"
+		import { configureHuggingFaceAuth, finishHuggingFaceSignIn, getHuggingFaceAuth, signInHuggingFace } from "/scripts/huggingface-auth.js"
+
+		const errorBox = document.getElementById("hero-error")
+		const ctas = [...document.querySelectorAll("[data-hf-login]")]
+		const setBusy = busy => ctas.forEach(cta => busy ? cta.setAttribute("aria-busy", "true") : cta.removeAttribute("aria-busy"))
+		const showError = error => {
+			errorBox.textContent = error?.message || "Could not sign in with Hugging Face. Please try again."
+			errorBox.classList.remove("hidden")
+			setBusy(false)
+		}
+
+		const configured = getConfig().then(config => configureHuggingFaceAuth(config?.generation))
+
+		if (/[?&](code|error)=/.test(location.search)) {
+			setBusy(true)
+			configured
+				.then(() => finishHuggingFaceSignIn())
+				.then(finished => {
+					if (!getHuggingFaceAuth().signedIn) throw new Error("Hugging Face sign-in did not complete. Please try again.")
+					// Only a completed OAuth round-trip counts as a conversion.
+					if (finished?.handled) window.posthog?.capture("login_completed", {}, { send_instantly: true })
+					location.replace("/app/")
+				})
+				.catch(error => {
+					window.posthog?.capture("login_failed", { error: error?.message })
+					showError(error)
+				})
+		}
+
+		for (const cta of ctas) {
+			cta.addEventListener("click", event => {
+				event.preventDefault()
+				errorBox.classList.add("hidden")
+				cta.setAttribute("aria-busy", "true")
+				window.posthog?.capture("login_started")
+				configured
+					.then(() => {
+						if (getHuggingFaceAuth().signedIn) location.assign("/app/")
+						else return signInHuggingFace()
+					})
+					.catch(error => {
+						window.posthog?.capture("login_failed", { error: error?.message })
+						showError(error)
+					})
+			})
+		}
+	</script>
+	<script type="module" src="/assets/bg.js?v=webgl-8"></script>
+	<script type="module" src="/assets/bg_2.js?v=webgl-7"></script>
+	<script type="module" src="/assets/bg3.js?v=9"></script>
+	<script type="module" src="/scripts/landing.js?v=worldsplat-30"></script>
+	<script type="module" src="/scripts/hero-splat.js?v=11"></script>
+</body>
+</html>

@@ -1,0 +1,346 @@
+{
+	"version": 1,
+	"source": "hero-splat.ply",
+	"primitives": [
+		{
+			"name": "foot-L",
+			"type": "box",
+			"position": [
+				0.2183,
+				-0.6964,
+				-0.365
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.4846,
+				0.2056,
+				0.3068
+			],
+			"color": "#c9b49a"
+		},
+		{
+			"name": "foot-R",
+			"type": "box",
+			"position": [
+				0.0165,
+				-0.699,
+				0.2634
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.4846,
+				0.2056,
+				0.3068
+			],
+			"color": "#c9b49a"
+		},
+		{
+			"name": "shin-L",
+			"type": "box",
+			"position": [
+				0.1442,
+				-0.4299,
+				-0.3361
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.3232,
+				0.333,
+				0.2691
+			],
+			"color": "#ddc8ad"
+		},
+		{
+			"name": "shin-R",
+			"type": "box",
+			"position": [
+				-0.0393,
+				-0.4297,
+				0.2222
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.3232,
+				0.333,
+				0.2691
+			],
+			"color": "#ddc8ad"
+		},
+		{
+			"name": "thigh-L",
+			"type": "box",
+			"position": [
+				0.1689,
+				-0.1392,
+				-0.3104
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.2712,
+				0.258,
+				0.265
+			],
+			"color": "#ddc8ad"
+		},
+		{
+			"name": "thigh-R",
+			"type": "box",
+			"position": [
+				0.0059,
+				-0.1342,
+				0.2129
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.2712,
+				0.258,
+				0.265
+			],
+			"color": "#ddc8ad"
+		},
+		{
+			"name": "pelvis",
+			"type": "box",
+			"position": [
+				0.0157,
+				0.0114,
+				-0.0564
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.4075,
+				0.1839,
+				0.3095
+			],
+			"color": "#565d63"
+		},
+		{
+			"name": "torso",
+			"type": "box",
+			"position": [
+				-0.0558,
+				0.3047,
+				-0.0288
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.5503,
+				0.4026,
+				0.5672
+			],
+			"color": "#ddc8ad"
+		},
+		{
+			"name": "shoulder-L",
+			"type": "box",
+			"position": [
+				-0.0283,
+				0.3951,
+				-0.4707
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.3318,
+				0.394,
+				0.3167
+			],
+			"color": "#ddc8ad"
+		},
+		{
+			"name": "shoulder-R",
+			"type": "box",
+			"position": [
+				-0.3367,
+				0.4002,
+				0.3541
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.253,
+				0.4126,
+				0.2163
+			],
+			"color": "#ddc8ad"
+		},
+		{
+			"name": "arm-L",
+			"type": "box",
+			"position": [
+				0.1631,
+				0.0526,
+				-0.479
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.389,
+				0.2911,
+				0.3402
+			],
+			"color": "#c9b49a"
+		},
+		{
+			"name": "fist-L",
+			"type": "box",
+			"position": [
+				0.1432,
+				-0.2036,
+				-0.4303
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.3355,
+				0.2213,
+				0.2367
+			],
+			"color": "#565d63"
+		},
+		{
+			"name": "arm-R",
+			"type": "box",
+			"position": [
+				-0.1532,
+				0.0499,
+				0.4411
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.4459,
+				0.2881,
+				0.3727
+			],
+			"color": "#c9b49a"
+		},
+		{
+			"name": "cannon-R",
+			"type": "box",
+			"position": [
+				-0.0223,
+				-0.2126,
+				0.4585
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.2704,
+				0.2369,
+				0.3949
+			],
+			"color": "#697177"
+		},
+		{
+			"name": "head",
+			"type": "box",
+			"position": [
+				-0.125,
+				0.6482,
+				-0.0322
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.5138,
+				0.2843,
+				0.4394
+			],
+			"color": "#ddc8ad"
+		},
+		{
+			"name": "visor",
+			"type": "box",
+			"position": [
+				0.1319,
+				0.6709,
+				-0.0322
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.035,
+				0.1194,
+				0.3164
+			],
+			"color": "#6fa8e8"
+		},
+		{
+			"name": "chest-plate",
+			"type": "box",
+			"position": [
+				0.2194,
+				0.3691,
+				-0.0288
+			],
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				0.035,
+				0.2013,
+				0.3119
+			],
+			"color": "#697177"
+		}
+	]
+}

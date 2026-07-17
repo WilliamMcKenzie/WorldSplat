@@ -1,0 +1,3400 @@
+{
+  "version": 4,
+  "ground": {
+    "size": 144,
+    "complete": true,
+    "strokes": [
+      {
+        "mode": "paint",
+        "color": "#d6dde2",
+        "radius": 5.7,
+        "closed": false,
+        "points": [
+          [
+            -22,
+            -18
+          ],
+          [
+            22,
+            -18
+          ],
+          [
+            22,
+            -12
+          ],
+          [
+            -22,
+            -12
+          ],
+          [
+            -22,
+            -6
+          ],
+          [
+            22,
+            -6
+          ],
+          [
+            22,
+            0
+          ],
+          [
+            -22,
+            0
+          ],
+          [
+            -22,
+            6
+          ],
+          [
+            22,
+            6
+          ],
+          [
+            22,
+            12
+          ],
+          [
+            -22,
+            12
+          ],
+          [
+            -22,
+            18
+          ],
+          [
+            22,
+            18
+          ]
+        ]
+      },
+      {
+        "mode": "paint",
+        "color": "#eef3f5",
+        "radius": 2.8,
+        "closed": false,
+        "points": [
+          [
+            -18,
+            15
+          ],
+          [
+            -12,
+            11
+          ],
+          [
+            -7,
+            6
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            2,
+            -4
+          ],
+          [
+            7,
+            -9
+          ],
+          [
+            12,
+            -14
+          ]
+        ]
+      },
+      {
+        "mode": "paint",
+        "color": "#a8c5d2",
+        "radius": 2.2,
+        "closed": false,
+        "points": [
+          [
+            -20,
+            -2
+          ],
+          [
+            -13,
+            -3
+          ],
+          [
+            -7,
+            -5
+          ],
+          [
+            0,
+            -6
+          ],
+          [
+            8,
+            -6
+          ],
+          [
+            16,
+            -4
+          ],
+          [
+            21,
+            -1
+          ]
+        ]
+      },
+      {
+        "mode": "paint",
+        "color": "#768b94",
+        "radius": 1.1,
+        "closed": false,
+        "points": [
+          [
+            -16,
+            18
+          ],
+          [
+            -10,
+            16
+          ],
+          [
+            -4,
+            15
+          ],
+          [
+            4,
+            16
+          ],
+          [
+            12,
+            18
+          ]
+        ]
+      }
+    ]
+  },
+  "primitives": [
+    {
+      "type": "box",
+      "position": [
+        -22,
+        0.7,
+        -21
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        -0.02
+      ],
+      "scale": [
+        3.6,
+        1.4,
+        2.0
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -18,
+        0.7,
+        -21
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.02
+      ],
+      "scale": [
+        3.6,
+        1.4,
+        2.0
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -14,
+        0.7,
+        -21
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        -0.02
+      ],
+      "scale": [
+        3.6,
+        1.4,
+        2.0
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -10,
+        0.7,
+        -21
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.02
+      ],
+      "scale": [
+        3.6,
+        1.4,
+        2.0
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -6,
+        0.7,
+        -21
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        -0.02
+      ],
+      "scale": [
+        3.6,
+        1.4,
+        2.0
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -2,
+        0.7,
+        -21
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.02
+      ],
+      "scale": [
+        3.6,
+        1.4,
+        2.0
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        2,
+        0.7,
+        -21
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        -0.02
+      ],
+      "scale": [
+        3.6,
+        1.4,
+        2.0
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        6,
+        0.7,
+        -21
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.02
+      ],
+      "scale": [
+        3.6,
+        1.4,
+        2.0
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        10,
+        0.7,
+        -21
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        -0.02
+      ],
+      "scale": [
+        3.6,
+        1.4,
+        2.0
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        14,
+        0.7,
+        -21
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.02
+      ],
+      "scale": [
+        3.6,
+        1.4,
+        2.0
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        18,
+        0.7,
+        -21
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        -0.02
+      ],
+      "scale": [
+        3.6,
+        1.4,
+        2.0
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        22,
+        0.7,
+        -21
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.02
+      ],
+      "scale": [
+        3.6,
+        1.4,
+        2.0
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -23,
+        0.7,
+        -17
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        23,
+        0.7,
+        -17
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -23,
+        0.7,
+        -13
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        23,
+        0.7,
+        -13
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -23,
+        0.7,
+        -9
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        23,
+        0.7,
+        -9
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -23,
+        0.7,
+        -5
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        23,
+        0.7,
+        -5
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -23,
+        0.7,
+        -1
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        23,
+        0.7,
+        -1
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -23,
+        0.7,
+        3
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        23,
+        0.7,
+        3
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -23,
+        0.7,
+        7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        23,
+        0.7,
+        7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -23,
+        0.7,
+        11
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        23,
+        0.7,
+        11
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -23,
+        0.7,
+        15
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        23,
+        0.7,
+        15
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.4,
+        3.6
+      ],
+      "color": "#69767c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        0,
+        0.7,
+        -7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        17.0,
+        1.4,
+        15.0
+      ],
+      "color": "#76858b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        0,
+        4.8,
+        -7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        13.5,
+        8.2,
+        11.5
+      ],
+      "color": "#aebbc0",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        0,
+        9.4,
+        -7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        14.5,
+        1.0,
+        12.5
+      ],
+      "color": "#657278",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        0,
+        11.2,
+        -7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        12.0,
+        2.8,
+        10.0
+      ],
+      "color": "#cbd5d9",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        0,
+        13.1,
+        -7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        9.5,
+        1.1,
+        8.0
+      ],
+      "color": "#e3eaed",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        0,
+        14.2,
+        -7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        6.8,
+        1.0,
+        5.8
+      ],
+      "color": "#eef3f5",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        0,
+        15.0,
+        -7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        4.2,
+        0.7,
+        3.8
+      ],
+      "color": "#f7fafb",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        3.7,
+        15.9,
+        -8.2
+      ],
+      "rotation": [
+        0.0,
+        -0.18,
+        0.24
+      ],
+      "scale": [
+        9.5,
+        1.8,
+        2.1
+      ],
+      "color": "#3e4d55",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        7.8,
+        17.0,
+        -9.0
+      ],
+      "rotation": [
+        0.0,
+        -0.18,
+        0.24
+      ],
+      "scale": [
+        2.0,
+        2.6,
+        3.1
+      ],
+      "color": "#25343a",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -0.2,
+        14.8,
+        -7.1
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        -0.38
+      ],
+      "scale": [
+        1.0,
+        4.0,
+        1.0
+      ],
+      "color": "#4a5960",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        0.2,
+        14.8,
+        -7.1
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.38
+      ],
+      "scale": [
+        1.0,
+        4.0,
+        1.0
+      ],
+      "color": "#4a5960",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -4.2,
+        6.2,
+        -1.15
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.1,
+        3.4,
+        0.28
+      ],
+      "color": "#35708c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -4.2,
+        6.2,
+        -0.95
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.18,
+        3.6,
+        0.12
+      ],
+      "color": "#26343a",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -4.2,
+        6.2,
+        -0.95
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.3,
+        0.18,
+        0.12
+      ],
+      "color": "#26343a",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        0,
+        6.2,
+        -1.15
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.1,
+        3.4,
+        0.28
+      ],
+      "color": "#35708c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        0,
+        6.2,
+        -0.95
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.18,
+        3.6,
+        0.12
+      ],
+      "color": "#26343a",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        0,
+        6.2,
+        -0.95
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.3,
+        0.18,
+        0.12
+      ],
+      "color": "#26343a",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        4.2,
+        6.2,
+        -1.15
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.1,
+        3.4,
+        0.28
+      ],
+      "color": "#35708c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        4.2,
+        6.2,
+        -0.95
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.18,
+        3.6,
+        0.12
+      ],
+      "color": "#26343a",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        4.2,
+        6.2,
+        -0.95
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.3,
+        0.18,
+        0.12
+      ],
+      "color": "#26343a",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        0,
+        0.75,
+        7.5
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        8.0,
+        1.2,
+        14.5
+      ],
+      "color": "#7e8b90",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -4.4,
+        2.0,
+        7.5
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.45,
+        3.6,
+        14.5
+      ],
+      "color": "#3e4d55",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        4.4,
+        2.0,
+        7.5
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.45,
+        3.6,
+        14.5
+      ],
+      "color": "#3e4d55",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -4.4,
+        3.2,
+        2
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.4,
+        0.35,
+        0.4
+      ],
+      "color": "#d9b45b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        4.4,
+        3.2,
+        2
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.4,
+        0.35,
+        0.4
+      ],
+      "color": "#d9b45b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -4.4,
+        3.2,
+        5
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.4,
+        0.35,
+        0.4
+      ],
+      "color": "#d9b45b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        4.4,
+        3.2,
+        5
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.4,
+        0.35,
+        0.4
+      ],
+      "color": "#d9b45b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -4.4,
+        3.2,
+        8
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.4,
+        0.35,
+        0.4
+      ],
+      "color": "#d9b45b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        4.4,
+        3.2,
+        8
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.4,
+        0.35,
+        0.4
+      ],
+      "color": "#d9b45b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -4.4,
+        3.2,
+        11
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.4,
+        0.35,
+        0.4
+      ],
+      "color": "#d9b45b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        4.4,
+        3.2,
+        11
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.4,
+        0.35,
+        0.4
+      ],
+      "color": "#d9b45b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -4.4,
+        3.2,
+        14
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.4,
+        0.35,
+        0.4
+      ],
+      "color": "#d9b45b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        4.4,
+        3.2,
+        14
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.4,
+        0.35,
+        0.4
+      ],
+      "color": "#d9b45b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -15,
+        0.6,
+        7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        9.0,
+        1.2,
+        8.0
+      ],
+      "color": "#76858b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -15,
+        3.3,
+        7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        8.0,
+        5.4,
+        7.0
+      ],
+      "color": "#aebbc0",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -16.7,
+        6.3,
+        7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.5
+      ],
+      "scale": [
+        5.0,
+        0.55,
+        8.0
+      ],
+      "color": "#47565e",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -13.3,
+        6.3,
+        7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        -0.5
+      ],
+      "scale": [
+        5.0,
+        0.55,
+        8.0
+      ],
+      "color": "#5a6970",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -15,
+        2.5,
+        2.95
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.3,
+        3.7,
+        0.28
+      ],
+      "color": "#35708c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -15,
+        2.5,
+        3.15
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.18,
+        3.9,
+        0.12
+      ],
+      "color": "#26343a",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -15,
+        2.5,
+        3.15
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.5,
+        0.18,
+        0.12
+      ],
+      "color": "#26343a",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        15,
+        0.6,
+        7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        9.0,
+        1.2,
+        8.0
+      ],
+      "color": "#76858b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        15,
+        3.3,
+        7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        8.0,
+        5.4,
+        7.0
+      ],
+      "color": "#aebbc0",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        13.3,
+        6.3,
+        7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        -0.5
+      ],
+      "scale": [
+        5.0,
+        0.55,
+        8.0
+      ],
+      "color": "#47565e",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        16.7,
+        6.3,
+        7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.5
+      ],
+      "scale": [
+        5.0,
+        0.55,
+        8.0
+      ],
+      "color": "#5a6970",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        15,
+        2.5,
+        2.95
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.3,
+        3.7,
+        0.28
+      ],
+      "color": "#35708c",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        15,
+        2.5,
+        3.15
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.18,
+        3.9,
+        0.12
+      ],
+      "color": "#26343a",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        15,
+        2.5,
+        3.15
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.5,
+        0.18,
+        0.12
+      ],
+      "color": "#26343a",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -18,
+        2.625,
+        -14
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.55,
+        5.25,
+        0.55
+      ],
+      "color": "#4d3523",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -18,
+        3.6,
+        -14
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        4.8,
+        1.05,
+        4.8
+      ],
+      "color": "#314829",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -18,
+        5.1,
+        -14
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.9,
+        1.05,
+        3.9
+      ],
+      "color": "#3d5a38",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -18,
+        6.525,
+        -14
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.0,
+        1.05,
+        3.0
+      ],
+      "color": "#314829",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -18,
+        7.725,
+        -14
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.05,
+        2.0
+      ],
+      "color": "#3d5a38",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -13,
+        2.17,
+        -16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.55,
+        4.34,
+        0.55
+      ],
+      "color": "#4d3523",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -13,
+        2.976,
+        -16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        4.8,
+        1.05,
+        4.8
+      ],
+      "color": "#314829",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -13,
+        4.216,
+        -16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.9,
+        1.05,
+        3.9
+      ],
+      "color": "#3d5a38",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -13,
+        5.394,
+        -16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.0,
+        1.05,
+        3.0
+      ],
+      "color": "#314829",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -13,
+        6.386,
+        -16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.05,
+        2.0
+      ],
+      "color": "#3d5a38",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        15,
+        2.45,
+        -16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.55,
+        4.9,
+        0.55
+      ],
+      "color": "#4d3523",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        15,
+        3.36,
+        -16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        4.8,
+        1.05,
+        4.8
+      ],
+      "color": "#314829",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        15,
+        4.76,
+        -16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.9,
+        1.05,
+        3.9
+      ],
+      "color": "#3d5a38",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        15,
+        6.09,
+        -16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.0,
+        1.05,
+        3.0
+      ],
+      "color": "#314829",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        15,
+        7.21,
+        -16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.05,
+        2.0
+      ],
+      "color": "#3d5a38",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        19,
+        2.275,
+        -11
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.55,
+        4.55,
+        0.55
+      ],
+      "color": "#4d3523",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        19,
+        3.12,
+        -11
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        4.8,
+        1.05,
+        4.8
+      ],
+      "color": "#314829",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        19,
+        4.42,
+        -11
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.9,
+        1.05,
+        3.9
+      ],
+      "color": "#3d5a38",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        19,
+        5.655,
+        -11
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.0,
+        1.05,
+        3.0
+      ],
+      "color": "#314829",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        19,
+        6.695,
+        -11
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.05,
+        2.0
+      ],
+      "color": "#3d5a38",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -18,
+        2.52,
+        16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.55,
+        5.04,
+        0.55
+      ],
+      "color": "#4d3523",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -18,
+        3.456,
+        16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        4.8,
+        1.05,
+        4.8
+      ],
+      "color": "#314829",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -18,
+        4.896,
+        16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.9,
+        1.05,
+        3.9
+      ],
+      "color": "#3d5a38",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -18,
+        6.264,
+        16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.0,
+        1.05,
+        3.0
+      ],
+      "color": "#314829",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -18,
+        7.416,
+        16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.05,
+        2.0
+      ],
+      "color": "#3d5a38",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        18,
+        2.38,
+        16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.55,
+        4.76,
+        0.55
+      ],
+      "color": "#4d3523",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        18,
+        3.264,
+        16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        4.8,
+        1.05,
+        4.8
+      ],
+      "color": "#314829",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        18,
+        4.624,
+        16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.9,
+        1.05,
+        3.9
+      ],
+      "color": "#3d5a38",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        18,
+        5.916,
+        16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.0,
+        1.05,
+        3.0
+      ],
+      "color": "#314829",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        18,
+        7.004,
+        16
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.05,
+        2.0
+      ],
+      "color": "#3d5a38",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -10,
+        2.03,
+        17
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.55,
+        4.06,
+        0.55
+      ],
+      "color": "#4d3523",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -10,
+        2.784,
+        17
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        4.8,
+        1.05,
+        4.8
+      ],
+      "color": "#314829",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -10,
+        3.944,
+        17
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.9,
+        1.05,
+        3.9
+      ],
+      "color": "#3d5a38",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -10,
+        5.046,
+        17
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.0,
+        1.05,
+        3.0
+      ],
+      "color": "#314829",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -10,
+        5.974,
+        17
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.05,
+        2.0
+      ],
+      "color": "#3d5a38",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        11,
+        2.1,
+        17
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.55,
+        4.2,
+        0.55
+      ],
+      "color": "#4d3523",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        11,
+        2.88,
+        17
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        4.8,
+        1.05,
+        4.8
+      ],
+      "color": "#314829",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        11,
+        4.08,
+        17
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.9,
+        1.05,
+        3.9
+      ],
+      "color": "#3d5a38",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        11,
+        5.22,
+        17
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        3.0,
+        1.05,
+        3.0
+      ],
+      "color": "#314829",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        11,
+        6.18,
+        17
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        2.0,
+        1.05,
+        2.0
+      ],
+      "color": "#3d5a38",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -7,
+        2.4,
+        14
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.28,
+        4.8,
+        0.28
+      ],
+      "color": "#2d251f",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -7,
+        5.05,
+        14
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.95,
+        0.65,
+        0.95
+      ],
+      "color": "#d9b45b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -7,
+        5.05,
+        14
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.15,
+        0.16,
+        1.15
+      ],
+      "color": "#6f6858",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        7,
+        2.4,
+        14
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.28,
+        4.8,
+        0.28
+      ],
+      "color": "#2d251f",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        7,
+        5.05,
+        14
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.95,
+        0.65,
+        0.95
+      ],
+      "color": "#d9b45b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        7,
+        5.05,
+        14
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.15,
+        0.16,
+        1.15
+      ],
+      "color": "#6f6858",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -8,
+        2.4,
+        -1
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.28,
+        4.8,
+        0.28
+      ],
+      "color": "#2d251f",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -8,
+        5.05,
+        -1
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.95,
+        0.65,
+        0.95
+      ],
+      "color": "#d9b45b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        -8,
+        5.05,
+        -1
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.15,
+        0.16,
+        1.15
+      ],
+      "color": "#6f6858",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        8,
+        2.4,
+        -1
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.28,
+        4.8,
+        0.28
+      ],
+      "color": "#2d251f",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        8,
+        5.05,
+        -1
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.95,
+        0.65,
+        0.95
+      ],
+      "color": "#d9b45b",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    },
+    {
+      "type": "box",
+      "position": [
+        8,
+        5.05,
+        -1
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.15,
+        0.16,
+        1.15
+      ],
+      "color": "#6f6858",
+      "locked": false,
+      "support": null,
+      "supportAxis": {
+        "name": "y",
+        "sign": 1
+      }
+    }
+  ]
+}

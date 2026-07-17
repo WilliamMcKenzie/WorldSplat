@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>WorldSketch A/B Lab</title>
+	<meta name="robots" content="noindex">
+	<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%235b6ee1' d='M12 1.6L21.5 7v10L12 22.4L2.5 17V7z'/%3E%3Cpath fill='%23fff' opacity='0.35' d='M12 1.6L21.5 7L12 12.4L2.5 7z'/%3E%3Cpath fill='%23000' opacity='0.15' d='M12 12.4L21.5 7v10L12 22.4z'/%3E%3C/svg%3E">
+	<link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css">
+	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+	<script type="importmap">
+	{
+		"imports": {
+			"@gradio/client": "https://cdn.jsdelivr.net/npm/@gradio/client@2.3.1/+esm",
+			"@huggingface/inference": "https://cdn.jsdelivr.net/npm/@huggingface/inference@4.13.23/+esm"
+		}
+	}
+	</script>
+	<style>
+		body { padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
+		.result-img { width: 100%; image-rendering: auto; background: repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%) 0 0 / 16px 16px; }
+		textarea.prompt-box { font-family: ui-monospace, monospace; font-size: 0.72rem; line-height: 1.35; }
+	</style>
+</head>
+<body>
+	<h1 class="text-2xl font-bold mb-1">Generation A/B Lab</h1>
+	<p class="text-sm opacity-70 mb-4">Run one pipeline stage in isolation. Same seeds across both prompts, so the only difference is the prompt. Uses your Hugging Face sign-in from the main app.</p>
+	<div class="alert alert-warning mb-4 hidden" id="auth_warning">Not signed in. <a class="link" href="/">Sign in from the landing page</a>, then reload this page.</div>
+
+	<div class="card bg-base-100 border border-base-300 shadow mb-4">
+		<div class="card-body gap-3">
+			<h2 class="card-title text-base">Inputs</h2>
+			<div class="flex flex-wrap gap-6">
+				<label class="form-control">
+					<span class="label-text mb-1">Block-out render (e.g. <code>scene-input.png</code> from <code>server/outputs/NNNN/</code>)</span>
+					<input type="file" accept="image/*" class="file-input file-input-bordered file-input-sm" id="input_image">
+				</label>
+				<label class="form-control">
+					<span class="label-text mb-1">Geometry map (optional)</span>
+					<input type="file" accept="image/*" class="file-input file-input-bordered file-input-sm" id="geometry_image">
+				</label>
+				<label class="form-control">
+					<span class="label-text mb-1">Style guide (optional) — art style to copy; reference it in the prompt, e.g. &ldquo;match the art style of the last input image&rdquo;</span>
+					<input type="file" accept="image/*" class="file-input file-input-bordered file-input-sm" id="style_image">
+				</label>
+				<label class="form-control">
+					<span class="label-text mb-1">Seeds (comma-separated, fixed across variants)</span>
+					<input type="text" value="101, 202, 303" class="input input-bordered input-sm w-48" id="seeds_input">
+				</label>
+			</div>
+			<div class="flex flex-wrap items-end gap-3">
+				<label class="form-control grow">
+					<span class="label-text mb-1">Scene description (used by “Fill with current prompt”)</span>
+					<input type="text" placeholder="A sandstone desert fortress…" class="input input-bordered input-sm w-full" id="scene_text">
+				</label>
+			</div>
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div>
+					<div class="flex items-center justify-between gap-2 mb-1 flex-wrap">
+						<span class="font-semibold text-sm">Prompt A</span>
+						<div class="flex gap-1 flex-wrap" id="presets_a"></div>
+					</div>
+					<textarea class="textarea textarea-bordered prompt-box w-full" rows="12" id="prompt_a"></textarea>
+				</div>
+				<div>
+					<div class="flex items-center justify-between gap-2 mb-1 flex-wrap">
+						<span class="font-semibold text-sm">Prompt B</span>
+						<div class="flex gap-1 flex-wrap" id="presets_b"></div>
+					</div>
+					<textarea class="textarea textarea-bordered prompt-box w-full" rows="12" id="prompt_b"></textarea>
+				</div>
+			</div>
+			<div class="flex items-center gap-3 flex-wrap">
+				<button class="btn btn-primary btn-sm" id="run_btn">Run A/B</button>
+				<button class="btn btn-ghost btn-sm hidden" id="cancel_btn">Cancel</button>
+				<span class="text-sm opacity-70" id="status_line"></span>
+			</div>
+			<p class="text-xs opacity-60">Each cell is one image run on the SAME route the live app uses (inference credits by default — results transfer 1:1 to production). Runs go one at a time. Leave Prompt B empty to run only Prompt A (seed sweep).</p>
+		</div>
+	</div>
+
+	<div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="results"></div>
+
+	<script type="module" src="/scripts/ab-lab.js"></script>
+</body>
+</html>

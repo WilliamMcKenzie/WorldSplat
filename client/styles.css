@@ -1,0 +1,2068 @@
+html {
+	/* Palette mirrors the marketing pages (site.css) so the editor and the
+	   landing page read as one product: warm paper neutrals, near-black ink. */
+	--paper: #fbfbfa;      /* page background */
+	--card: #efeeea;       /* filled chips, progress track */
+	--panel: #f5f4f1;      /* hover fills — also renderer.js's clear colour */
+	--ink: #0d0d0c;        /* THE accent: black-pill actives stay ink */
+	--ink-soft: #3f3f3b;
+	--ink-faint: #6e6e68;
+	--line: #e5e4df;
+	--white: #ffffff;
+	/* Highlight trio — used sparingly, one job each, everything else stays ink:
+	   sun = the active tool, coral = generation in flight, sky = splat selection
+	   (sky is also renderer.js's selectionAccent). */
+	/* Colored highlights retired (2026-07-16): everything active/selected now
+	   wears daisyUI's default greys. --accent = solid fills/thumbs/rings
+	   (gray-500), --accent-fill = light active-pill fill (base-300). The old
+	   --hl-* names stay so their many call sites keep working. */
+	--accent: #6b7280;
+	--accent-fill: #e5e6e6;
+	--hl-sun: #e5e6e6;
+	--hl-coral: #6b7280;
+	--hl-sky: #6b7280;
+	/* The landing page's serif voice (hero headline), reserved for panel headers. */
+	--font-display: "Newsreader", Georgia, "Times New Roman", serif;
+	/* daisyUI hooks (its themes are :where()-scoped, so these win). */
+	--color-primary: var(--accent);
+	--color-primary-content: var(--white);
+	--color-base-200: var(--panel);
+	--color-base-300: var(--line);
+	background: var(--paper);
+	color: var(--ink);
+	font-size: 0.9rem;
+	font-family: "Inter", -apple-system, "Helvetica Neue", Arial, sans-serif;
+	font-optical-sizing: auto;
+	font-weight: 400;
+	font-style: normal;
+	letter-spacing: -0.011em;
+	-webkit-font-smoothing: antialiased;
+}
+
+body {
+	margin: 0;
+	overflow: hidden;
+}
+
+button,
+input {
+	font: inherit;
+}
+
+button {
+	color: inherit;
+}
+
+#canvas {
+	position: fixed;
+	inset: 0;
+}
+
+#canvas canvas {
+	cursor: grab;
+}
+
+#canvas canvas.is-pointer {
+	cursor: default;
+}
+
+#canvas canvas.is-move {
+	cursor: move;
+}
+
+#canvas canvas.is-eraser {
+	cursor: cell;
+}
+
+#canvas canvas.is-placing {
+	cursor: crosshair;
+}
+
+#canvas canvas.is-painting {
+	cursor: crosshair;
+}
+
+#canvas canvas.is-scaling {
+	cursor: grab;
+}
+
+#canvas canvas.is-rotating {
+	cursor: alias;
+}
+
+#canvas canvas.is-dragging {
+	cursor: grabbing;
+}
+
+#canvas canvas.is-scaling.is-dragging {
+	cursor: nwse-resize;
+}
+
+#canvas canvas.is-rotating.is-dragging {
+	cursor: alias;
+}
+
+.hidden {
+	display: none !important;
+}
+
+/* While a generation is in flight the canvases take no input — say so with the cursor
+   (overrides every per-tool cursor variant). */
+body.is-generating #canvas canvas {
+	cursor: not-allowed !important;
+}
+
+/* Build / View tabs: Build shows the editable block-out, View shows the generated
+   splats. The editing tools only exist in Build (see body.tab-view below). */
+.view-tabs {
+	position: absolute;
+	top: 1rem;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	gap: 0.2rem;
+	padding: 0.3rem;
+	background: var(--white);
+	border: 1px solid rgba(20, 20, 15, 0.08);
+	border-radius: 9999px;
+	box-shadow: 0 0.45rem 1.4rem rgba(20, 20, 15, 0.16), 0 0.08rem 0.18rem rgba(20, 20, 15, 0.12);
+}
+
+.view-tab {
+	border: 0;
+	background: transparent;
+	padding: 0.42rem 1.15rem;
+	border-radius: 9999px;
+	color: var(--ink-faint);
+	font-weight: 500;
+	cursor: pointer;
+}
+
+.view-tab:hover {
+	background: var(--panel);
+	color: var(--ink);
+}
+
+/* Reveal: the bar arrives as a plain white pill and its ink fades in — labels and
+   the active pill start white-on-white, then resolve to their real colours. */
+.view-tabs.tabs-enter {
+	animation: view-tabs-in 0.4s ease both;
+}
+
+.view-tabs.tabs-enter .view-tab {
+	animation: view-tab-ink-in 0.9s ease both;
+}
+
+.view-tabs.tabs-enter .view-tab.active {
+	animation: view-tab-active-in 0.9s ease both;
+}
+
+@keyframes view-tabs-in {
+	from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+	to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes view-tab-ink-in {
+	from { color: #fff; }
+}
+
+@keyframes view-tab-active-in {
+	from { background: #fff; color: #fff; }
+}
+
+.view-tab.active {
+	background: var(--accent); /* fallback for any tab without a highlight below */
+	color: var(--white);
+}
+
+/* Each stage tab wears its own highlight when active — Build sun (matches the
+   active tool), View sky (matches splat selection), Play coral. */
+.view-tab[data-view-tab="build"].active,
+.view-tab[data-view-tab="view"].active,
+.view-tab[data-view-tab="play"].active {
+	color: var(--ink);
+	font-weight: 600;
+}
+.view-tab[data-view-tab="build"].active { background: var(--accent-fill); }
+.view-tab[data-view-tab="view"].active { background: var(--accent-fill); }
+.view-tab[data-view-tab="play"].active { background: var(--accent-fill); }
+/* Play is parked for now — the tab is hidden but all its wiring stays. */
+.view-tab[data-view-tab="play"] { display: none; }
+
+.view-tab:disabled {
+	cursor: default;
+}
+
+.view-tab:disabled:not(.is-loading) {
+	opacity: 0.35; /* stage not unlocked yet */
+}
+
+/* Splat generation in flight: the View tab shows a spinner and can't be clicked. */
+.view-tab.is-loading {
+	position: relative;
+	color: transparent;
+}
+
+.view-tab.is-loading::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	margin: auto;
+	width: 1rem;
+	height: 1rem;
+	border-radius: 50%;
+	border: 2px solid color-mix(in srgb, var(--hl-coral) 28%, transparent);
+	border-top-color: var(--hl-coral);
+	animation: view-tab-spin 0.8s linear infinite;
+}
+
+@keyframes view-tab-spin {
+	to { transform: rotate(360deg); }
+}
+
+/* View tab shows the tabs + the splat tool dock — no block-out tools, no prompt bar. */
+body.tab-view .palette-stack,
+body.tab-view .tool-dock,
+body.tab-view .chat-dock {
+	display: none;
+}
+
+/* Play tab: the world, the tabs (the exit), and the controls hint. Everything that
+   edits — rails, docks, panels, camera bar — disappears while walking. */
+body.tab-play .side-rail,
+body.tab-play .frames-panel,
+body.tab-play .bottom-dock,
+body.tab-play .settings-menu,
+body.tab-play .chat-dock,
+body.tab-play .cam-bar {
+	display: none;
+}
+
+body.tab-play #canvas canvas {
+	cursor: grab;
+}
+
+/* Orbit plus one lasso/transform tool for the generated splats. */
+.view-dock {
+	display: none;
+	align-items: center;
+	gap: 0.2rem;
+	padding: 0.35rem;
+	border-radius: 0.85rem;
+}
+
+body.tab-view .view-dock {
+	display: flex;
+}
+
+body.tab-view canvas.is-splat-lasso {
+	cursor: crosshair;
+}
+
+body.tab-view canvas.is-splat-move {
+	cursor: move;
+}
+
+body.tab-view canvas.is-splat-scale {
+	cursor: nwse-resize;
+}
+
+body.tab-view canvas.is-splat-rotate {
+	cursor: alias;
+}
+
+.view-transform-overlay {
+	position: fixed;
+	inset: 0;
+	width: 100vw;
+	height: 100vh;
+	pointer-events: none;
+	overflow: visible;
+}
+
+/* Splat selection wears the sky highlight — matches renderer.js's selectionAccent. */
+.view-lasso-path {
+	fill: color-mix(in srgb, var(--hl-sky) 14%, transparent);
+	stroke: var(--hl-sky);
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	stroke-dasharray: 5 4;
+}
+
+.view-selection-box {
+	fill: color-mix(in srgb, var(--hl-sky) 9%, transparent);
+	stroke: var(--hl-sky);
+	stroke-width: 1.5;
+	stroke-dasharray: 6 4;
+}
+
+.view-rotate-stem {
+	stroke: var(--hl-sky);
+	stroke-width: 1.5;
+}
+
+.view-rotate-handle {
+	fill: var(--hl-sky);
+	stroke: #fff;
+	stroke-width: 2;
+}
+
+.view-move-handle {
+	fill: #fff;
+	stroke: var(--hl-sky);
+	stroke-width: 2;
+}
+
+.view-scale-handle {
+	fill: #fff;
+	stroke: var(--hl-sky);
+	stroke-width: 2;
+}
+
+/* Errors DO need a surface (a failed generation used to die silently into the console):
+   the status line floats as a dismissable toast under the tabs, outside the prompt bar.
+   NOTE: not named `.status` — daisyUI v5 ships a Status-dot component on that class. */
+.status-toast {
+	position: absolute;
+	top: 4.4rem;
+	left: 50%;
+	transform: translateX(-50%);
+	margin: 0;
+	padding: 0.5rem 1rem;
+	border-radius: 0.85rem;
+	background: rgba(20, 20, 15, 0.85);
+	color: #fff;
+	font-size: 0.82rem;
+	max-width: min(46rem, 80vw);
+	text-align: center;
+	cursor: pointer;
+	z-index: 5;
+}
+
+/* Build and View keep independent frame lists in one compact DaisyUI navigator. */
+.frames-panel {
+	position: absolute;
+	left: 1rem;
+	top: 1rem;
+	width: 12.25rem;
+	border-radius: 1rem;
+	overflow: hidden;
+	/* Dev chrome: hidden unless the browser devtools are open (renderer.js
+	   toggles body.devtools-open); the Play-tab hide still wins. */
+	display: none;
+}
+body.devtools-open:not(.tab-play) .frames-panel { display: flex; }
+
+.frames-panel .card-body {
+	gap: 0.45rem;
+	padding: 0.65rem;
+}
+
+.frames-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	min-height: 2rem;
+	padding-left: 0.45rem;
+}
+
+.frames-heading {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+	min-width: 0;
+}
+
+.frames-icon {
+	width: 1rem;
+	height: 1rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	color: var(--color-base-content);
+}
+
+.frames-head .card-title {
+	font-family: var(--font-display);
+	font-size: 1rem;
+	font-weight: 500;
+	letter-spacing: -0.01em;
+	line-height: 1;
+}
+
+.frames-head .badge {
+	min-width: 1.35rem;
+	height: 1.25rem;
+	padding-inline: 0.35rem;
+	font-size: 0.68rem;
+}
+
+.frames-add svg {
+	width: 1rem;
+	height: 1rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+}
+
+.frames-list {
+	width: 100%;
+	padding: 0;
+	gap: 0.2rem;
+	flex-wrap: nowrap;
+	max-height: min(30vh, 11rem);
+	overflow-y: auto;
+}
+
+.frame-item {
+	position: relative;
+}
+
+.frame-row {
+	display: flex !important;
+	align-items: center;
+	/* daisyUI's menu lets the button size to its label, overflowing the panel and
+	   running the name under the × — pin it to the item so the ellipsis can kick in. */
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+	min-height: 2.25rem;
+	padding: 0.45rem 2.5rem 0.45rem 0.65rem !important;
+	border-radius: 0.7rem;
+	text-align: left;
+}
+
+.frame-row.menu-active {
+	background-color: var(--color-primary);
+	color: var(--color-primary-content);
+	font-weight: 650;
+}
+
+.frame-row .frame-name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.frame-del {
+	position: absolute;
+	top: 50%;
+	right: 0.35rem;
+	transform: translateY(-50%);
+	min-height: 1.65rem;
+	height: 1.65rem;
+	width: 1.65rem;
+	padding: 0; /* daisyUI's btn padding left the flex-shrunk icon a ~4px speck */
+	border: 0 !important; /* ...and its hover border reads as a clunky ring on the ink row */
+	box-shadow: none !important;
+	opacity: 0;
+	color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
+	transition: opacity 120ms ease;
+}
+
+.frame-item:hover .frame-del,
+.frame-item:focus-within .frame-del {
+	opacity: 1;
+}
+
+/* Own both hover layers — daisyUI's ghost hover paints a LIGHT pill, which turned the
+   white × on the active (ink) row invisible right as the cursor reached it. */
+.frame-del:hover {
+	background: color-mix(in srgb, var(--accent) 10%, transparent) !important;
+	color: var(--ink) !important;
+}
+
+.frame-item.is-active .frame-del {
+	color: rgba(255, 255, 255, 0.85);
+}
+
+.frame-item.is-active .frame-del:hover {
+	background: rgba(255, 255, 255, 0.22) !important;
+	color: var(--white) !important;
+}
+
+@media (hover: none) {
+	.frame-del {
+		opacity: 0.65;
+	}
+}
+
+.frame-del svg {
+	flex: none;
+	width: 1rem;
+	height: 1rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.2;
+	stroke-linecap: round;
+}
+
+.ui {
+	position: fixed;
+	inset: 0;
+	padding: 1rem;
+	pointer-events: none;
+	box-sizing: border-box;
+	transition: opacity 0.35s ease;
+}
+
+.ui * {
+	pointer-events: all;
+}
+
+/* Generation cutscene (renderer.js playGenerationCutscene): the UI steps aside
+   while the block-out flashes into the fresh splats, then fades back in. */
+body.cutscene .ui {
+	opacity: 0;
+}
+body.cutscene .ui * {
+	pointer-events: none;
+}
+
+.panel {
+	width: 13rem;
+	padding: 0.55rem;
+	background: #fff;
+	border: 1px solid rgba(20, 20, 15, 0.08);
+	border-radius: 0.85rem;
+	box-shadow: 0 0.45rem 1.4rem rgba(20, 20, 15, 0.16), 0 0.08rem 0.18rem rgba(20, 20, 15, 0.12);
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.brand {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+	margin: 0.2rem 0.25rem 0.45rem;
+}
+
+.brand span {
+	color: var(--ink-faint);
+	font-size: 0.78rem;
+}
+
+.viewer-ui .btn {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 2rem;
+	padding: 0.45rem 0.55rem;
+	border: 0;
+	outline: 1px solid transparent;
+	border-radius: 0.45rem;
+	background: var(--panel);
+	color: var(--ink-soft);
+	text-align: center;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.viewer-ui .btn:hover {
+	background: #e9e8e3;
+}
+
+.viewer-ui .btn.primary {
+	background: var(--accent);
+	color: #fff;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.viewer-ui .btn.primary:hover {
+	background: #262624;
+}
+
+.viewer-ui .btn:disabled {
+	opacity: 0.45;
+	cursor: wait;
+}
+
+/* World generation progress replaces the prompt while work is in flight. Queue
+   updates remain prominent without making the dock look like a disabled input. */
+.gen-progress {
+	/* Generation in flight is the coral moment — the pulse, track, fill and
+	   percent chip all key off this scoped primary. */
+	--color-primary: var(--hl-coral);
+	order: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 0.65rem;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.8rem 0.9rem 0.9rem;
+	background: rgba(255, 255, 255, 0.96);
+	border: 1px solid rgba(20, 20, 15, 0.08);
+	border-radius: 1rem;
+	box-shadow: 0 0.45rem 1.4rem rgba(20, 20, 15, 0.16), 0 0.08rem 0.18rem rgba(20, 20, 15, 0.12);
+}
+
+.gen-progress-copy {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	min-width: 0;
+}
+
+.gen-progress-pulse {
+	flex: none;
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	background: var(--color-primary);
+	box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 35%, transparent);
+	animation: gen-progress-pulse 1.6s ease-out infinite;
+}
+
+.gen-progress-track {
+	position: relative;
+	height: 0.55rem;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--color-primary) 13%, var(--card));
+	overflow: hidden;
+}
+
+.gen-progress-fill {
+	position: relative;
+	display: block;
+	width: 0;
+	height: 100%;
+	border-radius: 999px;
+	background: var(--color-primary);
+	box-shadow: 0 0 0.65rem color-mix(in srgb, var(--color-primary) 36%, transparent);
+	transition: width 0.35s ease;
+	overflow: hidden;
+}
+
+.gen-progress-fill::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(100deg, transparent 15%, rgba(255, 255, 255, 0.32) 50%, transparent 85%);
+	transform: translateX(-100%);
+	animation: gen-progress-shimmer 1.8s ease-in-out infinite;
+}
+
+.gen-progress-label {
+	min-width: 0;
+	flex: 1;
+	overflow: hidden;
+	color: var(--ink-soft);
+	font-size: 0.8rem;
+	font-weight: 550;
+	line-height: 1.3;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.gen-progress-percent {
+	flex: none;
+	min-width: 2.7rem;
+	padding: 0.16rem 0.38rem;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--color-primary) 11%, #fff);
+	color: var(--color-primary);
+	font-size: 0.7rem;
+	font-variant-numeric: tabular-nums;
+	font-weight: 700;
+	line-height: 1.25;
+	text-align: center;
+}
+
+@keyframes gen-progress-pulse {
+	45% { box-shadow: 0 0 0 0.35rem transparent; }
+	100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+@keyframes gen-progress-shimmer {
+	60%, 100% { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.gen-progress-pulse,
+	.gen-progress-fill::after {
+		animation: none;
+	}
+}
+
+.inspector,
+.palette-stack {
+	position: absolute;
+	right: 1rem;
+	top: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+
+/* Unified left rail (art-tool style): tools only — the colour + brush palette lives
+   in a contextual flyout beside it (tldraw/FigJam pattern: styles appear only when
+   the active tool consumes them). Deliberately DENSE: small buttons, tiny gaps. */
+.side-rail {
+	position: absolute;
+	left: 0.9rem;
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.3rem;
+	padding: 0.35rem;
+	border-radius: 0.8rem;
+}
+
+.rail-tools {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+}
+
+.side-rail .tool-btn {
+	position: relative;
+	width: 2.15rem;
+	height: 2.15rem;
+	min-width: 2.15rem;
+	min-height: 2.15rem;
+	border-radius: 0.45rem;
+}
+
+.side-rail .tool-btn svg {
+	width: 1.1rem;
+	height: 1.1rem;
+}
+
+/* The pen wears the current colour as a little dot, like FigJam's marker. */
+.tool-color-dot {
+	position: absolute;
+	right: 0.24rem;
+	bottom: 0.24rem;
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	background: #587553;
+	box-shadow: 0 0 0 1.5px #fff;
+	pointer-events: none;
+}
+
+.rail-divider {
+	width: 82%;
+	height: 1px;
+	background: var(--line);
+}
+
+/* Colour + brush flyout: a small card floating beside the rail. Opened by
+   renderer.js whenever the pen/box tool is active or a primitive is selected. */
+.rail-flyout {
+	position: absolute;
+	left: calc(100% + 0.55rem);
+	top: 50%;
+	transform: translateY(-50%) translateX(-0.3rem);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.3rem;
+	padding: 0.4rem;
+	background: #fff;
+	border: 1px solid rgba(20, 20, 15, 0.08);
+	border-radius: 0.8rem;
+	box-shadow: 0 0.45rem 1.4rem rgba(20, 20, 15, 0.16), 0 0.08rem 0.18rem rgba(20, 20, 15, 0.12);
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity 0.14s ease, transform 0.14s ease, visibility 0.14s;
+}
+
+.rail-flyout.open {
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(-50%);
+}
+
+.side-rail .swatch-grid {
+	grid-template-columns: repeat(3, 1.8rem);
+	gap: 0.1rem;
+}
+
+.side-rail .color-swatch,
+.side-rail .add-color-swatch {
+	width: 1.8rem;
+	height: 1.8rem;
+	min-width: 1.8rem;
+	min-height: 1.8rem;
+	border-radius: 0.4rem;
+}
+
+.side-rail .color-swatch span {
+	width: 1.05rem;
+	height: 1.05rem;
+}
+
+/* Active colour reads as a ring around the dot — the standard palette affordance. */
+.side-rail .color-swatch.active {
+	background: transparent !important;
+}
+
+.side-rail .color-swatch.active span {
+	box-shadow: inset 0 0 0 1px rgba(20, 20, 15, 0.08), 0 0 0 2px #fff, 0 0 0 3.5px var(--accent);
+}
+
+/* Hovering a swatch reveals its remove badge (Canva-style palette editing). */
+.side-rail .color-swatch {
+	position: relative;
+	overflow: visible;
+}
+
+.swatch-del {
+	position: absolute;
+	top: -0.2rem;
+	right: -0.2rem;
+	width: 0.9rem;
+	height: 0.9rem;
+	display: none;
+	place-items: center;
+	border-radius: 50%;
+	background: #fff;
+	border: 1px solid var(--line);
+	color: var(--ink-faint);
+	font-size: 0.72rem;
+	line-height: 1;
+	cursor: pointer;
+	box-shadow: 0 1px 3px rgba(20, 20, 15, 0.2);
+	z-index: 1;
+}
+
+.color-swatch:hover .swatch-del {
+	display: grid;
+}
+
+.swatch-del:hover {
+	background: #fde8e8;
+	border-color: #f0b9b9;
+	color: #d64545;
+}
+
+/* Custom colour picker popover: SV square + hue strip + hex field, anchored beside
+   the palette — replaces the OS colour dialog that opened in the screen corner. */
+.color-pop {
+	position: absolute;
+	left: calc(100% + 0.55rem);
+	top: 50%;
+	transform: translateY(-50%);
+	width: 10.5rem;
+	padding: 0.5rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+	background: #fff;
+	border: 1px solid rgba(20, 20, 15, 0.08);
+	border-radius: 0.8rem;
+	box-shadow: 0 0.45rem 1.4rem rgba(20, 20, 15, 0.16), 0 0.08rem 0.18rem rgba(20, 20, 15, 0.12);
+}
+
+.color-pop-sv {
+	position: relative;
+	width: 100%;
+	height: 7rem;
+	border-radius: 0.5rem;
+	cursor: crosshair;
+	touch-action: none;
+	background:
+		linear-gradient(to top, #000, rgba(0, 0, 0, 0)),
+		linear-gradient(to right, #fff, var(--pop-hue, #f00));
+}
+
+.color-pop-hue {
+	position: relative;
+	height: 0.75rem;
+	border-radius: 999px;
+	cursor: ew-resize;
+	touch-action: none;
+	background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+}
+
+.color-pop-thumb {
+	position: absolute;
+	width: 0.85rem;
+	height: 0.85rem;
+	box-sizing: border-box;
+	border-radius: 50%;
+	border: 2px solid #fff;
+	box-shadow: 0 0 0 1px rgba(20, 20, 15, 0.25), 0 1px 3px rgba(20, 20, 15, 0.3);
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+}
+
+.color-pop-hue .color-pop-thumb {
+	top: 50%;
+}
+
+.color-pop-row {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.color-pop-preview {
+	flex: none;
+	width: 1.6rem;
+	height: 1.6rem;
+	border-radius: 0.45rem;
+	box-shadow: inset 0 0 0 1px rgba(20, 20, 15, 0.1);
+}
+
+.color-pop-hex {
+	flex: 1;
+	min-width: 0;
+	padding: 0.3rem 0.4rem;
+	font-size: 0.82rem;
+	text-transform: lowercase;
+}
+
+.color-pop-add {
+	flex: none;
+	border: 0;
+	border-radius: 0.45rem;
+	padding: 0.34rem 0.55rem;
+	background: var(--accent);
+	color: #fff;
+	font-weight: 600;
+	font-size: 0.82rem;
+	cursor: pointer;
+}
+
+.color-pop-add:hover {
+	background: #262624;
+}
+
+.side-rail .add-color-swatch svg {
+	width: 0.95rem;
+	height: 0.95rem;
+}
+
+/* Brush size: a continuous slider; the dot beside it previews the current size.
+   Width matches the 3-column colour grid above so the flyout keeps its footprint. */
+.brush-slider {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	width: 5.8rem;
+	padding: 0.2rem 0.15rem;
+}
+
+.brush-size-dot {
+	flex: none;
+	display: grid;
+	place-items: center;
+	width: 1.05rem;
+	height: 1.05rem;
+}
+
+.brush-size-dot::before {
+	content: "";
+	width: var(--brush-dot, 0.66rem);
+	height: var(--brush-dot, 0.66rem);
+	border-radius: 50%;
+	background: var(--accent);
+	box-shadow: inset 0 0 0 1px rgba(20, 20, 15, 0.08);
+}
+
+.brush-slider input[type="range"] {
+	flex: 1;
+	min-width: 0;
+	margin: 0;
+	appearance: none;
+	-webkit-appearance: none;
+	height: 1rem;
+	background: transparent;
+	cursor: pointer;
+}
+
+.brush-slider input[type="range"]::-webkit-slider-runnable-track {
+	height: 0.2rem;
+	border-radius: 999px;
+	background: var(--line);
+}
+
+.brush-slider input[type="range"]::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	width: 0.8rem;
+	height: 0.8rem;
+	margin-top: -0.3rem;
+	border-radius: 50%;
+	background: var(--accent);
+	border: 2px solid #fff;
+	box-shadow: 0 0 0 1px rgba(20, 20, 15, 0.12);
+}
+
+.brush-slider input[type="range"]::-moz-range-track {
+	height: 0.2rem;
+	border-radius: 999px;
+	background: var(--line);
+}
+
+.brush-slider input[type="range"]::-moz-range-thumb {
+	width: 0.8rem;
+	height: 0.8rem;
+	border-radius: 50%;
+	background: var(--accent);
+	border: 2px solid #fff;
+	box-shadow: 0 0 0 1px rgba(20, 20, 15, 0.12);
+}
+
+body.tab-view .side-rail {
+	display: none;
+}
+
+.inspector {
+	width: 18rem;
+}
+
+.color-palette,
+.brush-palette {
+	border-radius: 0.85rem;
+}
+
+/* Top-left settings: a single gear button that opens a popover holding the
+   screenshot / import-export actions and the collider/bounds toggles. */
+.settings-menu {
+	position: absolute;
+	left: 1rem;
+	top: 1rem;
+	display: none;
+}
+
+body.dev-controls-visible .settings-menu {
+	display: block;
+}
+
+.tuning-panel {
+	position: absolute;
+	right: 1rem;
+	top: 1rem;
+	z-index: 30;
+	display: none;
+	width: min(30rem, calc(100vw - 2rem));
+	max-height: calc(100vh - 2rem);
+	overflow: auto;
+	padding: 0.85rem;
+	border: 1px solid var(--line);
+	border-radius: 1rem;
+	background: rgba(255, 255, 255, 0.96);
+	color: var(--ink-soft);
+	box-shadow: 0 18px 45px -24px rgba(0, 0, 0, 0.45);
+	backdrop-filter: blur(12px);
+}
+
+body.dev-controls-visible .tuning-panel {
+	display: block;
+}
+
+.tuning-head {
+	display: flex;
+	align-items: start;
+	justify-content: space-between;
+	gap: 0.75rem;
+	margin-bottom: 0.75rem;
+}
+
+.tuning-head strong {
+	display: block;
+	font-size: 0.92rem;
+	line-height: 1.15;
+}
+
+.tuning-head span {
+	display: block;
+	margin-top: 0.15rem;
+	font-size: 0.72rem;
+	color: var(--ink-faint);
+}
+
+.tuning-live {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-size: 0.76rem;
+	color: var(--ink-soft);
+	user-select: none;
+}
+
+.tuning-live input {
+	width: auto;
+}
+
+/* dev-panel scene-flip checkboxes sit as one row */
+.tuning-flips {
+	display: flex;
+	gap: 0.9rem;
+	padding: 0.25rem 0;
+}
+
+.tuning-group {
+	padding: 0.65rem 0;
+	border-top: 1px solid var(--line);
+}
+
+.tuning-group h3 {
+	margin: 0 0 0.45rem;
+	font-size: 0.72rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--ink-faint);
+}
+
+.tuning-row {
+	display: grid;
+	gap: 0.25rem;
+	margin: 0.5rem 0;
+}
+
+.tuning-row > span {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	font-size: 0.78rem;
+	color: var(--ink-soft);
+}
+
+.tuning-row > small {
+	display: block;
+	color: var(--ink-faint);
+	font-size: 0.68rem;
+	line-height: 1.35;
+}
+
+.tuning-row output {
+	font-variant-numeric: tabular-nums;
+	color: var(--ink);
+}
+
+.tuning-row input[type="range"] {
+	width: 100%;
+	padding: 0;
+	accent-color: var(--accent);
+}
+
+.tuning-row > .tuning-range-labels {
+	font-size: 0.63rem;
+	color: #a5a49d;
+}
+
+.build-json-group {
+	padding: 0.75rem 0;
+	border-top: 1px solid var(--line);
+}
+
+.build-json-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.build-json-head h3 {
+	margin: 0;
+	font-size: 0.72rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--ink-faint);
+}
+
+.build-json-head span {
+	font-size: 0.68rem;
+	color: var(--ink-faint);
+}
+
+.build-json-head span[data-state="live"] {
+	color: #16834a;
+}
+
+.build-json-head span[data-state="dirty"] {
+	color: #a15c00;
+}
+
+.build-json-head span[data-state="error"] {
+	color: #c0362c;
+}
+
+.build-json-group > p {
+	margin: 0.35rem 0 0.5rem;
+	font-size: 0.68rem;
+	line-height: 1.35;
+	color: var(--ink-faint);
+}
+
+.build-json-group textarea {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 14rem;
+	resize: vertical;
+	padding: 0.6rem;
+	border: 1px solid var(--line);
+	border-radius: 0.55rem;
+	background: var(--paper);
+	color: var(--ink-soft);
+	font: 0.7rem/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	tab-size: 2;
+}
+
+.build-json-group textarea:focus {
+	border-color: var(--accent);
+	outline: 2px solid rgba(13, 13, 12, 0.1);
+}
+
+.build-json-actions {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
+}
+
+.build-json-actions button {
+	flex: 1;
+	padding: 0.45rem 0.55rem;
+	border: 1px solid var(--line);
+	border-radius: 0.55rem;
+	background: var(--paper);
+	color: var(--ink-soft);
+	font-size: 0.76rem;
+}
+
+.build-json-actions button:first-child {
+	border-color: var(--line);
+	background: var(--panel);
+	color: var(--ink);
+}
+
+.build-json-actions button:hover {
+	border-color: #cfcec8;
+	background: #e9e8e3;
+}
+
+/* How long the Apply-JSON bottom-up build animation takes (0 = instant). */
+.build-json-speed {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin-top: 0.6rem;
+	font-size: 0.68rem;
+	color: var(--ink-faint);
+}
+
+.build-json-speed output {
+	color: var(--ink-soft);
+	font-weight: 600;
+}
+
+.build-json-speed input {
+	width: 100%;
+	margin: 0;
+	accent-color: var(--accent);
+}
+
+.tuning-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	padding-top: 0.65rem;
+	border-top: 1px solid var(--line);
+}
+
+.tuning-actions button {
+	flex: 1 1 6.5rem;
+	padding: 0.45rem 0.55rem;
+	border: 1px solid var(--line);
+	border-radius: 0.55rem;
+	background: var(--paper);
+	color: var(--ink-soft);
+	font-size: 0.78rem;
+}
+
+.tuning-actions button:hover {
+	background: var(--panel);
+	border-color: var(--line);
+}
+
+.settings-btn {
+	justify-content: center;
+	width: 3.25rem;
+	height: 3.25rem;
+	min-height: 3.25rem;
+	border-radius: 0.85rem;
+	background: #ffffff !important;
+	border: 1px solid var(--line) !important;
+	color: var(--ink-soft) !important;
+	box-shadow: 0 10px 25px -12px rgba(0, 0, 0, 0.35) !important;
+}
+
+.settings-btn:hover {
+	background: var(--panel) !important;
+}
+
+.settings-btn svg {
+	width: 1.6rem;
+	height: 1.6rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	stroke-width: 1.9;
+}
+
+.settings-popover {
+	position: absolute;
+	left: 0;
+	top: calc(100% + 0.5rem);
+	width: 15rem;
+	max-width: calc(100vw - 2rem);
+	padding: 0.4rem;
+	background: #fff;
+	border: 1px solid rgba(20, 20, 15, 0.08);
+	border-radius: 0.85rem;
+	box-shadow: 0 0.45rem 1.4rem rgba(20, 20, 15, 0.16), 0 0.08rem 0.18rem rgba(20, 20, 15, 0.12);
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+}
+
+.settings-item {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.5rem 0.6rem;
+	border: 0;
+	border-radius: 0.55rem;
+	background: transparent;
+	color: var(--ink-soft);
+	font-size: 0.9rem;
+	text-align: left;
+	cursor: pointer;
+}
+
+.settings-item:hover {
+	background: var(--panel);
+}
+
+.settings-item svg {
+	flex: none;
+	width: 1.25rem;
+	height: 1.25rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	stroke-width: 1.9;
+}
+
+.settings-item span {
+	flex: 1;
+}
+
+.settings-toggle .toggle {
+	width: auto;
+	flex: none;
+}
+
+.settings-divider {
+	height: 1px;
+	margin: 0.3rem 0.4rem;
+	background: var(--line);
+}
+
+.swatch-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 2.7rem);
+	gap: 0.45rem;
+}
+
+.color-swatch,
+.add-color-swatch {
+	display: grid;
+	place-items: center;
+	width: 2.7rem;
+	height: 2.7rem;
+	min-width: 2.7rem;
+	min-height: 2.7rem;
+	padding: 0;
+	border-radius: 0.5rem;
+}
+
+.color-swatch:hover,
+.color-swatch.active,
+.add-color-swatch:hover {
+	background: color-mix(in srgb, var(--accent) 22%, transparent) !important;
+}
+
+.color-swatch span {
+	width: 1.35rem;
+	height: 1.35rem;
+	border-radius: 50%;
+	box-shadow: inset 0 0 0 1px rgba(20, 20, 15, 0.08);
+}
+
+.add-color-swatch svg {
+	width: 1.25rem;
+	height: 1.25rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.color-swatch:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.inspector label {
+	display: grid;
+	grid-template-columns: 5rem 1fr;
+	gap: 0.35rem;
+	align-items: center;
+	color: var(--ink-faint);
+}
+
+.triplet {
+	display: grid;
+	grid-template-columns: 5rem 1fr 1fr 1fr;
+	gap: 0.35rem;
+	align-items: center;
+}
+
+.triplet span {
+	color: var(--ink-faint);
+}
+
+input {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+	padding: 0.35rem;
+	border: 1px solid var(--line);
+	border-radius: 0.35rem;
+	background: #fff;
+	color: var(--ink-soft);
+}
+
+input[type="color"] {
+	height: 2rem;
+	padding: 0.1rem;
+}
+
+.file-btn {
+	position: relative;
+	overflow: hidden;
+}
+
+.file-btn input {
+	position: absolute;
+	inset: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.range-row {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	margin: 0.35rem 0.25rem;
+	color: var(--ink-faint);
+}
+
+.range-row input {
+	padding: 0;
+}
+
+.toggle-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0.5rem;
+	margin: 0.35rem 0.25rem;
+	color: var(--ink-faint);
+	cursor: pointer;
+}
+
+.toggle-row input {
+	width: auto;
+	margin: 0;
+	cursor: pointer;
+}
+
+.viewer-ui {
+	justify-content: flex-start;
+}
+
+/* The chat prompt bar + primitive toolbar live together, stacked and centred at
+   the bottom of the screen. Generation progress temporarily replaces the prompt. */
+.bottom-dock {
+	position: absolute;
+	left: 50%;
+	bottom: 1rem;
+	transform: translateX(-50%);
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 0.45rem;
+	width: max-content;
+	max-width: calc(100vw - 2rem);
+}
+
+.chat-dock {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 0.4rem;
+	width: min(33rem, calc(100vw - 2rem));
+}
+
+.chat-dock.is-showing-progress .chat-bar {
+	display: none;
+}
+
+.chat-bar {
+	order: 1;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.5rem;
+	background: #fff;
+	border: 1px solid rgba(20, 20, 15, 0.08);
+	border-radius: 1rem;
+	box-shadow: 0 0.45rem 1.4rem rgba(20, 20, 15, 0.16), 0 0.08rem 0.18rem rgba(20, 20, 15, 0.12);
+}
+
+.chat-input {
+	flex: 1;
+	min-width: 0;
+	border: 0;
+	padding: 0.55rem 0.75rem;
+	background: transparent;
+	color: var(--ink);
+	font-size: 1rem;
+}
+
+.chat-input:focus {
+	outline: none;
+}
+
+.chat-input::placeholder {
+	color: #a5a49d;
+}
+
+.chat-send {
+	flex: none;
+	width: 2.7rem;
+	height: 2.7rem;
+	min-height: 2.7rem;
+	border-radius: 0.7rem;
+	background: var(--card) !important;
+	border-color: var(--card) !important;
+	color: var(--ink-soft) !important;
+	box-shadow: none !important;
+}
+
+.chat-send:hover {
+	background: #e9e8e3 !important;
+	border-color: #e9e8e3 !important;
+}
+
+.chat-send:disabled {
+	opacity: 0.6;
+	background: var(--panel) !important;
+	border-color: var(--panel) !important;
+	color: #a5a49d !important;
+	cursor: default;
+}
+
+.chat-send svg {
+	width: 1.4rem;
+	height: 1.4rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	stroke-width: 1.9;
+}
+
+.tool-dock {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.2rem;
+	padding: 0.35rem;
+	border-radius: 0.85rem;
+	width: max-content;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.icon-btn,
+.tool-btn {
+	display: grid;
+	place-items: center;
+	width: 2.75rem;
+	height: 2.75rem;
+	min-width: 2.75rem;
+	min-height: 2.75rem;
+	padding: 0;
+	border-radius: 0.55rem;
+	color: var(--ink-soft);
+}
+
+.icon-btn {
+	width: 2.35rem;
+	height: 2.35rem;
+	color: var(--ink-faint);
+}
+
+.icon-btn:hover,
+.tool-btn:hover {
+	background: var(--panel) !important;
+}
+
+.tool-btn.active {
+	/* The active tool wears the sun highlight — the one always-on colour pop. */
+	background: var(--hl-sun) !important;
+	color: var(--ink) !important;
+}
+
+.icon-btn svg,
+.tool-btn svg {
+	width: 1.45rem;
+	height: 1.45rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	stroke-width: 1.9;
+}
+
+.dock-divider {
+	width: 1px;
+	height: 1.8rem;
+	margin: 0 0.25rem;
+	background: var(--line);
+}
+
+@media (max-width: 720px) {
+	.ui {
+		padding: 0.75rem;
+	}
+
+	.inspector {
+		width: min(18rem, calc(50vw - 1.1rem));
+	}
+
+	.inspector,
+	.palette-stack {
+		right: 0.75rem;
+		top: 0.75rem;
+	}
+
+	.tool-dock {
+		width: 100%;
+		justify-content: center;
+		overflow-x: auto;
+	}
+}
+
+@media (max-width: 560px) {
+	.inspector {
+		display: none;
+	}
+
+	.palette-stack {
+		width: calc(100vw - 1.5rem);
+	}
+
+	.color-palette,
+	.brush-palette {
+		width: 100%;
+		box-sizing: border-box;
+	}
+
+	.swatch-grid {
+		grid-template-columns: repeat(4, 1fr);
+	}
+
+	.bottom-dock {
+		bottom: 0.75rem;
+	}
+}
+
+/* --- Build history panel --------------------------------------------------- */
+
+.history-panel {
+	position: absolute;
+	left: 1rem;
+	top: 5.25rem;
+	width: 17rem;
+	max-width: calc(100vw - 2rem);
+	max-height: calc(100vh - 6.5rem);
+	padding: 0.55rem;
+	background: #fff;
+	border: 1px solid rgba(20, 20, 15, 0.08);
+	border-radius: 0.85rem;
+	box-shadow: 0 0.45rem 1.4rem rgba(20, 20, 15, 0.16), 0 0.08rem 0.18rem rgba(20, 20, 15, 0.12);
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.history-panel.hidden {
+	display: none;
+}
+
+.history-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.4rem;
+	padding: 0.15rem 0.25rem 0;
+}
+
+.history-heading {
+	flex: 1;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-family: var(--font-display);
+	font-size: 1.1rem;
+	font-weight: 500;
+	color: var(--ink-soft);
+}
+
+.history-close {
+	flex: none;
+	width: 1.5rem;
+	height: 1.5rem;
+	border: 0;
+	border-radius: 0.4rem;
+	background: transparent;
+	color: var(--ink-faint);
+	font-size: 1.2rem;
+	line-height: 1;
+	cursor: pointer;
+	display: grid;
+	place-items: center;
+}
+
+.history-close:hover {
+	background: var(--panel);
+	color: var(--ink-soft);
+}
+
+.history-count {
+	min-width: 1.25rem;
+	height: 1.25rem;
+	padding: 0 0.35rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--accent) 30%, #fff);
+	color: var(--ink-soft);
+	font-size: 0.7rem;
+	font-weight: 700;
+}
+
+.history-count:empty {
+	display: none;
+}
+
+.history-clear {
+	border: 0;
+	background: transparent;
+	color: var(--ink-faint);
+	font-size: 0.78rem;
+	cursor: pointer;
+	padding: 0.2rem 0.4rem;
+	border-radius: 0.4rem;
+}
+
+.history-clear:hover {
+	background: #fde8e8;
+	color: #d64545;
+}
+
+.history-empty {
+	margin: 0;
+	padding: 0.55rem 0.4rem 0.75rem;
+	color: var(--ink-faint);
+	font-size: 0.82rem;
+	line-height: 1.35;
+}
+
+.history-empty.hidden {
+	display: none;
+}
+
+.history-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	overflow-y: auto;
+	padding-right: 0.1rem;
+}
+
+.history-item {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	padding: 0.3rem;
+	border-radius: 0.6rem;
+	border: 1px solid transparent;
+}
+
+.history-item:hover {
+	background: var(--panel);
+	border-color: var(--line);
+}
+
+.history-thumb {
+	flex: none;
+	width: 3.4rem;
+	height: 2.4rem;
+	padding: 0;
+	border: 1px solid var(--line);
+	border-radius: 0.4rem;
+	overflow: hidden;
+	background: var(--card);
+	color: #a5a49d;
+	display: grid;
+	place-items: center;
+	cursor: pointer;
+}
+
+.history-thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.history-meta {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	text-align: left;
+	cursor: pointer;
+	color: var(--ink-soft);
+}
+
+.history-title {
+	font-size: 0.85rem;
+	font-weight: 500;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.history-sub {
+	font-size: 0.72rem;
+	color: var(--ink-faint);
+}
+
+.history-del {
+	flex: none;
+	width: 1.5rem;
+	height: 1.5rem;
+	border: 0;
+	border-radius: 0.4rem;
+	background: transparent;
+	color: #a5a49d;
+	font-size: 1.15rem;
+	line-height: 1;
+	cursor: pointer;
+	display: grid;
+	place-items: center;
+}
+
+.history-del:hover {
+	background: #fde8e8;
+	color: #d64545;
+}
+
+.settings-item.active {
+	background: color-mix(in srgb, var(--accent) 18%, #fff);
+}
+
+/* --- Camera bar: fly mode + shot path (bottom-right) ------------------------- */
+
+.cam-bar {
+	position: absolute;
+	right: 1rem;
+	bottom: 1rem;
+	/* Dev chrome: hidden unless the browser devtools are open (renderer.js
+	   toggles body.devtools-open); Play tab still wins and hides it. */
+	display: none;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.3rem;
+	background: #fff;
+	border: 1px solid rgba(20, 20, 15, 0.08);
+	border-radius: 0.85rem;
+	box-shadow: 0 0.45rem 1.4rem rgba(20, 20, 15, 0.16), 0 0.08rem 0.18rem rgba(20, 20, 15, 0.12);
+}
+body.devtools-open:not(.tab-play) .cam-bar { display: flex; }
+
+.cam-btn {
+	border: 0;
+	background: transparent;
+	width: 2.2rem;
+	height: 2.2rem;
+	border-radius: 0.6rem;
+	color: var(--ink-faint);
+	cursor: pointer;
+	display: grid;
+	place-items: center;
+}
+
+.cam-btn:hover {
+	background: var(--panel);
+	color: var(--ink);
+}
+
+.cam-btn.active {
+	background: var(--accent);
+	color: #fff;
+}
+
+.cam-btn:disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+
+.cam-btn:disabled:hover {
+	background: transparent;
+	color: var(--ink-faint);
+}
+
+.cam-btn svg {
+	width: 1.15rem;
+	height: 1.15rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.9;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.cam-divider {
+	width: 1px;
+	height: 1.4rem;
+	background: rgba(20, 20, 15, 0.08);
+}
+
+.shot-chips {
+	display: flex;
+	align-items: center;
+	gap: 0.2rem;
+}
+
+.shot-chips:empty {
+	display: none;
+}
+
+.shot-chip {
+	position: relative;
+	border: 0;
+	background: var(--panel);
+	color: var(--ink);
+	min-width: 1.7rem;
+	height: 1.7rem;
+	padding: 0 0.4rem;
+	border-radius: 0.55rem;
+	font-size: 0.8rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.shot-chip:hover {
+	background: #e9e8e3;
+}
+
+.shot-del {
+	position: absolute;
+	top: -0.35rem;
+	right: -0.35rem;
+	width: 0.95rem;
+	height: 0.95rem;
+	border-radius: 50%;
+	background: var(--accent);
+	color: #fff;
+	font-size: 0.62rem;
+	line-height: 1;
+	display: none;
+	place-items: center;
+	cursor: pointer;
+}
+
+.shot-chip:hover .shot-del {
+	display: grid;
+}
+
+.fly-hint {
+	position: absolute;
+	bottom: 1.1rem;
+	left: 50%;
+	transform: translateX(-50%);
+	padding: 0.45rem 0.9rem;
+	border-radius: 999px;
+	background: rgba(20, 20, 15, 0.78);
+	color: #fff;
+	font-size: 0.78rem;
+	white-space: nowrap;
+	pointer-events: none;
+}
+
+.fly-hint.hidden {
+	display: none;
+}
+
+/* Flying: fade the editing chrome so the world fills the screen (the hint stays). */
+body.is-flying .view-tabs, body.is-flying .frames-panel, body.is-flying .side-rail,
+body.is-flying .bottom-dock, body.is-flying .settings-menu, body.is-flying .cam-bar {
+	opacity: 0.12;
+	pointer-events: none;
+	transition: opacity 0.25s ease;
+}
+
+/* Playing / recording a camera path: EXCLUSIVELY the world — every scrap of GUI (and
+   the cursor) disappears so the on-screen play and the exported video are identical.
+   Esc or a click on the world stops it. */
+body.is-cam-playing .ui {
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.25s ease;
+}
+
+body.is-cam-playing #canvas canvas {
+	cursor: none !important;
+}
+
+/* "o" shortcut: hide EVERYTHING except the canvas — panels, rails, overlays, devtools,
+   and anything appended to <body> later. Press "o" again to bring it all back. */
+body.hide-ui > :not(#canvas) {
+	display: none !important;
+}

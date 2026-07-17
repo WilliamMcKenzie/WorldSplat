@@ -1,0 +1,122 @@
+/* Styles for the worldsplat marketing landing page.
+   The editor keeps its own styles.css — nothing here leaks into the app. */
+
+:root {
+	--paper: #fbfbfa;      /* page background */
+	--ink: #0d0d0c;
+	--ink-soft: #3f3f3b;
+	--ink-faint: #6e6e68;
+	--line: #e5e4df;
+	--white: #ffffff;
+	--accent: #5b6ee1;     /* editor accent — ties the marketing keywords to the app */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+	scroll-behavior: smooth;
+	/* No scrollbars on the marketing page: the full-bleed 100vw stage would
+	   otherwise force a horizontal bar (100vw includes the scrollbar gutter),
+	   and the vertical bar is hidden chrome — the page still scrolls. */
+	overflow-x: hidden;
+	overflow-x: clip;
+	scrollbar-width: none;
+}
+html::-webkit-scrollbar { display: none; }
+
+body {
+	font-family: "Inter", -apple-system, "Helvetica Neue", Arial, sans-serif;
+	background: var(--paper);
+	color: var(--ink);
+	-webkit-font-smoothing: antialiased;
+	letter-spacing: -0.011em;
+}
+
+a { color: inherit; text-decoration: none; }
+
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+/* ---- top nav ---- */
+
+.nav {
+	display: flex;
+	align-items: center;
+	gap: 36px;
+	padding: 22px 36px;
+	max-width: 1440px;
+	margin: 0 auto;
+}
+
+.wordmark {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 19px;
+	font-weight: 650;
+	letter-spacing: -0.03em;
+}
+
+.wordmark svg { display: block; }
+
+.nav-links {
+	display: flex;
+	gap: 28px;
+	font-size: 15px;
+	font-weight: 450;
+	color: var(--ink-soft);
+}
+
+.nav-links a:hover { color: var(--ink); }
+
+.nav-cta { margin-left: auto; display: flex; gap: 10px; }
+
+/* ---- pill buttons ---- */
+
+.pill {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 42px;
+	padding: 0 20px;
+	border-radius: 9999px;
+	font-size: 15px;
+	font-weight: 500;
+	letter-spacing: -0.01em;
+	white-space: nowrap;
+	transition: transform 0.12s ease, background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.pill:active { transform: scale(0.98); }
+
+.pill-black { background: var(--ink); color: var(--white); }
+.pill-black:hover { background: #262624; }
+
+.pill-outline { background: var(--white); border: 1px solid var(--line); }
+.pill-outline:hover { border-color: #cfcec8; }
+
+.pill-lg { height: 50px; padding: 0 26px; font-size: 16px; }
+
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* ---- footer ---- */
+
+.footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 16px;
+	max-width: 1440px;
+	margin: 0 auto;
+	padding: 36px;
+	font-size: 14px;
+	color: var(--ink-faint);
+}
+
+.footer a:hover { color: var(--ink); }
+.footer nav { display: flex; gap: 22px; }
+
+@media (max-width: 860px) {
+	.nav { padding: 18px 20px; gap: 20px; }
+	.nav-links { display: none; }
+	.footer { padding: 28px 20px; }
+}

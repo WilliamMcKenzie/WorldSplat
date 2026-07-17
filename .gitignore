@@ -1,0 +1,34 @@
+# Secrets / local config
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+
+# Python virtualenvs / caches (match at any depth, dir or not)
+.venv
+.venv/
+venv/
+**/.venv/
+*.venv
+__pycache__/
+*.pyc
+
+# Go build artifacts
+/server/server
+/server/gausy
+/server/worldsketch
+/server/worldsketch-server
+/server/tmp/
+/tmp/
+*.test
+
+# Generated job output
+/outputs/
+/server/output/
+/server/outputs/
+
+# Node / Vercel
+node_modules/
+.vercel

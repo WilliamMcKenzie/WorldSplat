@@ -1,0 +1,8 @@
+.git
+.env*
+outputs
+**/.DS_Store
+server/worldsketch
+client/ab
+client/tests
+fixtures
