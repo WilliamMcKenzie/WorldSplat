@@ -229,7 +229,7 @@
 		}
 		/* the band's animated pixel-wave background is a WebGL canvas mounted by
 		   assets/bg_2.js — it replaced the old CSS grid + drifting-code layers */
-		/* the single 3D surface where reveal.js builds the block-out, flashes it,
+		/* the single 3D surface where reveal.js builds the block-out, dissolves it,
 		   and radially materializes the splat — the canvas itself is never faded,
 		   the show animates block and chunk opacities instead */
 		.reveal-canvas {
@@ -258,14 +258,12 @@
 			max-width: 17ch;
 			text-wrap: balance;
 		}
-		/* Staged copy: reveal.js fades the lead in as the block-out starts building;
-		   the tail starts WITH the radial materialize and its fade spans the same
-		   3.2s (GROW_S in reveal.js), so the sentence closes as the world densifies. */
+		/* Staged copy: reveal.js fades the lead in as the block-out starts building
+		   and the tail rides in with the first gaussians of the materialize. */
 		.reveal-lead, .reveal-tail {
 			opacity: 0;
 			transition: opacity 0.9s ease;
 		}
-		.reveal-tail { transition-duration: 3.2s; }
 		.reveal-lead.show, .reveal-tail.show { opacity: 1; }
 		/* sentence closes on the right of the gaussian — same serif voice as the hero */
 		.reveal-tail {
@@ -408,7 +406,7 @@
 	<script type="module" src="/assets/bg.js?v=webgl-8"></script>
 	<script type="module" src="/assets/bg_2.js?v=webgl-7"></script>
 	<script type="module" src="/assets/bg3.js?v=9"></script>
-	<script type="module" src="/scripts/landing.js?v=worldsplat-30"></script>
+	<script type="module" src="/scripts/landing.js?v=worldsplat-31"></script>
 	<script type="module" src="/scripts/hero-splat.js?v=11"></script>
 </body>
 </html>

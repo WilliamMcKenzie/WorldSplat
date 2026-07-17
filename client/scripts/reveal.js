@@ -1,6 +1,6 @@
 // Scroll-reveal "gaussian resolve": the arena assembles as an editor block-out
-// — the voxel geometry baked by scripts/generate-reveal-blockout.mjs — flashes
-// white, and then the REAL gaussian splat materializes gaussian-by-gaussian,
+// — the voxel geometry baked by scripts/generate-reveal-blockout.mjs — then
+// dissolves while the REAL gaussian splat materializes gaussian-by-gaussian,
 // growing outward from the centre of the plot (the hero mech's build-up, then
 // the radial materialize in place of a plain opacity fade).
 //
@@ -22,23 +22,27 @@ import * as THREE from "three"
 import { SparkRenderer, SplatMesh } from "spark"
 import { createPrimitive, disposeObject } from "/scripts/primitives.js"
 
-const TILT = 0.3                    // tipped down — a clear look onto the plot's ground
+const TILT = 0.6                    // tipped down — a clear look onto the plot's ground
 const DIST = 3.5                    // camera distance on +Z
 const YAW = Math.PI * 0.5 - 0.5     // fixed orientation (180° flip, then 90° left), no spin
 const FOCAL = 2.1                   // × min(W,H) — how much of the band the plot fills
 const OX = 0.5                      // projection centre as a fraction of band width
-const OY = 0.40                     // projection centre as a fraction of band height (< 0.5 lifts the plot)
-const BUILD_S = 0.5                 // seconds of staggered block construction
-const FLASH_MS = 220                // blocks ramp to white-hot…
-const FADE_MS = 180                 // …vanish completely…
+const OY = 0.44                     // projection centre as a fraction of band height
+const BUILD_S = 0.9                 // seconds of staggered block construction
+const FADE_MS = 600                 // the matte blocks fade out evenly (smoothstep) while the
+                                    // gaussians drizzle in beneath — a visible dissolve, but brief.
+                                    // No white flash: full white on the white page reads as the
+                                    // blocks blinking out and back.
 const WARM_MS = 600                 // splat warm-up behind the built blocks (hero+showcase
                                     // already paid Spark's cold-start by the time we're here)
-// …and then the radial materialize: chunk i starts its own RAMP_S fade at a
-// staggered offset through GROW_S, so several chunks are always mid-fade —
-// gaussians accumulate as a continuous drizzle instead of discrete pops.
+// …and then the radial materialize: chunk i starts its own ramp at a staggered
+// offset through GROW_S, so several chunks are always mid-fade — gaussians
+// accumulate as a continuous drizzle instead of discrete pops.
 const CHUNKS = 16                   // reveal granularity — each chunk ≈ 1/16th of the gaussians
-const GROW_S = 3.2                  // seconds from first gaussians to the full set
-const RAMP_S = 0.9                  // each chunk's own fade — overlaps the next chunks' starts
+const GROW_S = 4.0                  // seconds from first gaussians to the full set
+const RAMP_S = 1.2                  // outer chunks' fade — overlaps the next chunks' starts
+const RAMP_FIRST_S = 0.4            // the centre chunk snaps in fast; ramps lengthen toward
+                                    // RAMP_S across the first quarter of chunks
 // Chunk area grows with radius (annuli get bigger), so a mild power keeps the
 // visual pace even: slightly wider gaps for the small central chunks, tighter
 // for the big outer rings.
@@ -46,7 +50,6 @@ const STAGGER_POW = 0.8
 const JITTER = 0.3                  // × unit radius — how fuzzy the outward frontier is
 const BLOCKOUT = "/assets/reveal-blockout.json"
 const SPLAT = "/assets/reveal-splat.ply"
-const WHITE = new THREE.Color(0xffffff)
 
 export function initReveal() {
 	const band = document.getElementById("reveal")
@@ -60,8 +63,8 @@ export function initReveal() {
 	})
 }
 
-// Staged copy: "A world is" arrives with the first blocks, "a cloud of
-// gaussians." rides in with the materialize.
+// Staged copy: "A world is a" arrives with the first blocks, "a cloud of
+// splats." rides in with the first gaussians.
 function showCopy(band, part) {
 	band.querySelector(`.reveal-${part}`)?.classList.add("show")
 }
@@ -186,7 +189,8 @@ async function main(band, canvas) {
 		const clock = t * GROW_S
 		const span = Math.max(0.001, GROW_S - RAMP_S) // last chunk still finishes inside GROW_S
 		chunks.forEach((mesh, i) => {
-			const local = (clock - Math.pow(i / (chunks.length - 1), STAGGER_POW) * span) / RAMP_S
+			const ramp = RAMP_FIRST_S + (RAMP_S - RAMP_FIRST_S) * Math.min(1, i / (chunks.length / 4))
+			const local = (clock - Math.pow(i / (chunks.length - 1), STAGGER_POW) * span) / ramp
 			const o = local >= 1 ? 1 : local <= 0 ? 0 : local * local * (3 - 2 * local)
 			if (o !== mesh.opacity) mesh.opacity = o
 		})
@@ -201,7 +205,7 @@ async function main(band, canvas) {
 	if (!blocks) {
 		// No block-out to dissolve — still enter with the radial materialize.
 		for (const mesh of chunks) tilt.add(mesh)
-		showCopy(band, "tail") // rides the materialize (its CSS fade spans GROW_S)
+		showCopy(band, "tail") // the copy rides in with the first gaussians
 		await animate(GROW_S * 1000, growStep)
 		for (const mesh of chunks) mesh.opacity = 1
 		return
@@ -213,37 +217,31 @@ async function main(band, canvas) {
 	for (const mesh of chunks) tilt.add(mesh)
 	await new Promise(resolve => window.setTimeout(resolve, WARM_MS))
 
-	// The payoff: every block ramps to white-hot and dissolves away, and the
-	// world materializes gaussian-by-gaussian through the glow.
+	// The payoff: the materialize clock starts as the blocks begin dissolving,
+	// so the world forms through the ghost geometry — no empty stage. The tail
+	// copy arrives with the first gaussians, not after the last.
+	const materialize = animate(GROW_S * 1000, growStep)
+	showCopy(band, "tail")
 	const mats = []
-	const lines = []
 	for (const block of blocks.children) {
-		block.material.emissive = WHITE.clone()
-		block.material.emissiveIntensity = 0
 		mats.push(block.material)
 		const edge = block.children.find(child => child.userData.isEdgeOutline)
-		if (edge) lines.push({ material: edge.material, base: edge.material.color.clone() })
+		if (edge) mats.push(edge.material)
 	}
-	await animate(FLASH_MS, t => {
-		for (const mat of mats) mat.emissiveIntensity = t
-		for (const { material, base } of lines) material.color.copy(base).lerp(WHITE, t)
-	})
-	// The white blocks vanish completely before the splat shows a single
-	// gaussian — the blink of empty stage is what sells the swap.
-	for (const mat of [...mats, ...lines.map(l => l.material)]) {
+	for (const mat of mats) {
 		mat.transparent = true
 		mat.depthWrite = false
 		// the materials were compiled opaque (blending off, opacity ignored);
 		// without a recompile the "fade" renders as a hard snap at dispose
 		mat.needsUpdate = true
 	}
+	// The matte blocks fade out evenly over the forming gaussians.
 	await animate(FADE_MS, t => {
-		for (const mat of mats) mat.opacity = 1 - t
-		for (const { material } of lines) material.opacity = 1 - t
+		const o = 1 - t * t * (3 - 2 * t)
+		for (const mat of mats) mat.opacity = o
 	})
 	disposeObject(blocks)
-	showCopy(band, "tail") // the sentence closes WITH the materialize — its CSS fade spans GROW_S
-	await animate(GROW_S * 1000, growStep)
+	await materialize
 	for (const mesh of chunks) mesh.opacity = 1
 
 	// The block-out is baked in the splat's display frame (see the generator),
