@@ -3,7 +3,7 @@
 // cursor is, like a robot tracking your gaze. On load it acts out the product
 // promise: its block-out (baked by scripts/generate-hero-blockout.mjs into the
 // same seat the splat lands in) constructs block by block — the editor's
-// Apply-JSON reveal — then flashes white and dissolves into the real splat.
+// Apply-JSON reveal — then dissolves into the real splat fading up beneath it.
 // Own WebGL context + SparkRenderer + scene — Spark accumulators are
 // scene-scoped, so this can't ghost into the showcase splat below (and vice
 // versa). Standalone on purpose, same as landing.js: the marketing page
@@ -20,10 +20,11 @@ const MAX_YAW = 0.85 // rad each way toward the cursor
 const MAX_PITCH = 0.32
 const FOLLOW = 5.5 // 1/s — exponential chase toward the cursor
 const BUILD_SECONDS = 0.4 // block-by-block construction, snappier than the editor reveal
-const FLASH_MS = 200 // blocks ramp to white-hot…
-const FADE_MS = 160 // …vanish completely…
-const MATERIALIZE_MS = 280 // …and only then does the splat fade up
-const WHITE = new THREE.Color(0xffffff)
+const FADE_MS = 600 // the matte blocks fade out evenly (smoothstep) while the splat
+                    // fades up beneath — a visible dissolve, but brief. No white
+                    // flash: full white on the white page reads as the blocks
+                    // blinking out and back.
+const MATERIALIZE_MS = 280 // the splat's own fade-up, concurrent with the dissolve
 const SPLAT_YAW = 15 * Math.PI / 180 // splat-only trim so it faces the same way as the block-out (tuned by eye on ?hero=overlay)
 
 const host = document.getElementById("hero-stage")
@@ -131,7 +132,7 @@ async function main() {
 	}
 
 	// Don't start the show into a hidden tab (background-tab open): the reveal
-	// would play unseen and the rAF tweens would freeze mid-flash anyway.
+	// would play unseen and the rAF tweens would freeze mid-dissolve anyway.
 	if (document.hidden && !hold && !overlay) {
 		await new Promise(resolve => {
 			const onVisible = () => {
@@ -206,33 +207,29 @@ async function main() {
 	pivot.add(seat.inner)
 	await splatPainted()
 
-	// The payoff: every block ramps to white-hot, the splat fades up through
-	// the glow, and the blocks dissolve away — primitives became a world.
+	// The payoff: the splat fades up as the blocks dissolve over it — primitives
+	// became a world, with no empty stage between them.
+	const materialize = animate(MATERIALIZE_MS, t => { seat.mesh.opacity = t })
 	const mats = []
-	const lines = []
 	for (const mesh of blocks.children) {
-		mesh.material.emissive = WHITE.clone()
-		mesh.material.emissiveIntensity = 0
 		mats.push(mesh.material)
 		const edge = mesh.children.find(child => child.userData.isEdgeOutline)
-		if (edge) lines.push({ material: edge.material, base: edge.material.color.clone() })
+		if (edge) mats.push(edge.material)
 	}
-	await animate(FLASH_MS, t => {
-		for (const mat of mats) mat.emissiveIntensity = t
-		for (const { material, base } of lines) material.color.copy(base).lerp(WHITE, t)
-	})
-	// The white blocks vanish completely before the splat shows a single
-	// gaussian — the blink of empty stage is what sells the swap.
-	for (const mat of [...mats, ...lines.map(l => l.material)]) {
+	for (const mat of mats) {
 		mat.transparent = true
 		mat.depthWrite = false
+		// the materials were compiled opaque (blending off, opacity ignored);
+		// without a recompile the "fade" renders as a hard snap at dispose
+		mat.needsUpdate = true
 	}
+	// The matte blocks fade out evenly over the forming splat.
 	await animate(FADE_MS, t => {
-		for (const mat of mats) mat.opacity = 1 - t
-		for (const { material } of lines) material.opacity = 1 - t
+		const o = 1 - t * t * (3 - 2 * t)
+		for (const mat of mats) mat.opacity = o
 	})
 	disposeObject(blocks)
-	await animate(MATERIALIZE_MS, t => { seat.mesh.opacity = t })
+	await materialize
 	seat.mesh.opacity = 1
 
 	// The block-out is baked in display coordinates (see the generator), so the
