@@ -1,0 +1,50 @@
+name: Test
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: worldsplat
+          POSTGRES_PASSWORD: worldsplat-test
+          POSTGRES_DB: worldsplat_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U worldsplat -d worldsplat_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Go tests with PostgreSQL and Redis
+        working-directory: server
+        env:
+          TEST_DATABASE_URL: postgres://worldsplat:worldsplat-test@localhost:5432/worldsplat_test?sslmode=disable
+          TEST_REDIS_URL: redis://localhost:6379/15
+        run: go test -race ./...
+      - name: Go vet
+        working-directory: server
+        run: go vet ./...
+      - run: npm ci
+      - name: Browser module tests
+        run: npm test
+      - run: npx playwright install --with-deps chromium
+      - name: Browser workspace tests
+        run: npm run test:browser
+      - name: Container build
+        run: docker build -t worldsplat:test .

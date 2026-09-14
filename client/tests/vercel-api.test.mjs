@@ -6,9 +6,9 @@ import healthHandler from "../../api/healthz.mjs"
 
 test("Vercel config function matches the server defaults", async () => {
 	const config = runtimeConfig()
-	assert.equal(config.generation.provider, "huggingface")
-	assert.equal(config.generation.image.steps, 28) // FLUX.2-dev default (Qwen ran 20)
-	assert.equal(config.generation.tripo.gaussians, 131072)
+	assert.equal(config.generation.provider, "backend")
+	assert.match(config.backend.googleClientId, /\.apps\.googleusercontent\.com$/)
+	assert.equal(config.backend.apiBaseURL, "https://worldsplat-api.lagso.com")
 
 	const response = await configHandler.fetch(new Request("https://example.com/api/config"))
 	assert.equal(response.status, 200)
@@ -17,13 +17,13 @@ test("Vercel config function matches the server defaults", async () => {
 })
 
 test("Vercel config function clamps integer environment values", () => {
-	const previous = process.env.WS_HF_IMAGE_WIDTH
-	process.env.WS_HF_IMAGE_WIDTH = "9000"
+	const previous = process.env.WS_SCENE_OPACITY_FLOOR
+	process.env.WS_SCENE_OPACITY_FLOOR = "9000"
 	try {
-		assert.equal(runtimeConfig().generation.image.width, 2048)
+		assert.equal(runtimeConfig().scene.opacityFloor, 1)
 	} finally {
-		if (previous === undefined) delete process.env.WS_HF_IMAGE_WIDTH
-		else process.env.WS_HF_IMAGE_WIDTH = previous
+		if (previous === undefined) delete process.env.WS_SCENE_OPACITY_FLOOR
+		else process.env.WS_SCENE_OPACITY_FLOOR = previous
 	}
 })
 

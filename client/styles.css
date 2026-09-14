@@ -49,7 +49,7 @@ input {
 	font: inherit;
 }
 
-button {
+button:not(.btn) {
 	color: inherit;
 }
 
@@ -2066,3 +2066,24 @@ body.is-cam-playing #canvas canvas {
 body.hide-ui > :not(#canvas) {
 	display: none !important;
 }
+
+/* Keep the header limited to native daisyUI boxed tabs. */
+.workspace-header { position: fixed; top: 10px; left: 16px; right: 16px; z-index: 20; pointer-events: none; }
+#workspace_tabs { width: fit-content; max-width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; pointer-events: auto; background: transparent; box-shadow: none; }
+#workspace_tabs > .tab { flex-shrink: 0; white-space: nowrap; }
+.splat-info { position: fixed; top: 85px; left: 18px; max-width: min(320px, calc(100vw - 36px)); pointer-events: auto; z-index: 10; }
+.splat-info .card-body { padding: 16px; gap: 12px; font-size: 13px; }
+.splat-actions { display: flex; gap: 8px; }
+.workspace-startup { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: var(--paper); z-index: 100; padding: 30px; text-align: center; }
+.workspace-header ~ .settings-menu { top: 85px; }
+.frames-panel, body.devtools-open .frames-panel, .view-tabs, .view-dock { display: none !important; }
+body.tab-view .side-rail, body.tab-view .settings-menu, body.tab-view .view-transform-overlay { display: none !important; }
+body.tab-view #canvas canvas { cursor: grab !important; }
+#rename_tab_dialog { pointer-events: auto; }
+.status-toast { top: 82px; z-index: 30; }
+@media (max-width: 720px) {
+ .workspace-header { top: 8px; left: 8px; right: 8px; }
+}
+
+.account-renders { display: grid; gap: 8px; margin-top: 18px; max-height: 55vh; overflow: auto; }
+.account-render { text-align: left; display: flex; flex-direction: column; align-items: flex-start; height: auto; white-space: normal; padding: 12px; }

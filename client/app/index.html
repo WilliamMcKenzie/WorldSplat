@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>WorldSketch Editor</title>
+	<title>WorldSplat — Your workspace</title>
 	<meta name="robots" content="noindex">
 	<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='%23111110'%3E%3Cellipse cx='9' cy='10' rx='6' ry='5.2' transform='rotate(-18 9 10)'/%3E%3Cellipse cx='17' cy='8.5' rx='3.4' ry='2.9' transform='rotate(24 17 8.5)'/%3E%3Cellipse cx='15.5' cy='16.5' rx='4.4' ry='3.6' transform='rotate(-8 15.5 16.5)'/%3E%3Ccircle cx='6.5' cy='17.5' r='2.1'/%3E%3C/g%3E%3C/svg%3E">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,16 +11,14 @@
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
 	<link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css">
 	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-	<link rel="stylesheet" href="/styles.css?v=dev-chrome-1">
+	<link rel="stylesheet" href="/styles.css?v=google-tabs-1">
 	<script type="importmap">
 	{
 		"imports": {
 			"three": "/lib/three.module.min.js",
 			"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/",
 			"spark": "https://cdn.jsdelivr.net/npm/@sparkjsdev/spark@2.1.0/dist/spark.module.js",
-			"fflate": "https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js",
-			"@gradio/client": "https://cdn.jsdelivr.net/npm/@gradio/client@2.3.1/+esm",
-			"@huggingface/inference": "https://cdn.jsdelivr.net/npm/@huggingface/inference@4.13.23/+esm"
+			"fflate": "https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js"
 		}
 	}
 	</script>
@@ -37,7 +35,10 @@
 	<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
-	<div id="canvas"></div>
+	<div id="canvas" role="tabpanel" aria-label="Active workspace tab"></div>
+    <div id="editor_startup" class="workspace-startup"><span class="loading loading-spinner loading-lg"></span><p>Opening your workspace…</p><button class="btn hidden" onclick="location.reload()">Try again</button></div>
+    <dialog id="renders_dialog" class="modal"><div class="modal-box"><h2 class="text-lg font-semibold">Your renders</h2><p class="text-sm opacity-70">Reopen a result or check an ongoing render.</p><div id="account_renders" class="account-renders"></div><form method="dialog" class="modal-action"><button class="btn">Close</button></form></div></dialog>
+    <dialog id="rename_tab_dialog" class="modal"><form method="dialog" class="modal-box" id="rename_tab_form"><h2 class="text-lg font-semibold">Rename tab</h2><label class="form-control"><span class="label">Name</span><input id="rename_tab_input" class="input input-bordered w-full" maxlength="50" required></label><div class="modal-action"><button type="button" class="btn btn-ghost" id="rename_tab_cancel">Cancel</button><button class="btn btn-neutral" type="submit">Save name</button></div></form></dialog>
 	<svg class="view-transform-overlay hidden" id="view_transform_overlay" aria-hidden="true">
 		<path class="view-lasso-path hidden" id="view_lasso_path"></path>
 		<g class="view-selection-frame hidden" id="view_selection_frame">
@@ -57,22 +58,10 @@
 			<button class="view-tab" data-view-tab="view" role="tab" aria-selected="false" disabled title="See and arrange the generated world">View</button>
 			<button class="view-tab" data-view-tab="play" role="tab" aria-selected="false" disabled title="Walk the generated world third-person">Play</button>
 		</div>
-		<aside class="frames-panel card bg-base-100 border border-base-300 shadow-xl" id="frames_panel" aria-label="Builds">
-			<div class="card-body">
-				<header class="frames-head">
-					<div class="frames-heading">
-						<!-- Tabler Icons "hammer" (outline) -->
-						<svg class="frames-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M11.414 10l-7.383 7.418a2.091 2.091 0 0 0 0 2.967a2.11 2.11 0 0 0 2.976 0l7.407 -7.385"></path><path d="M18.121 15.293l2.586 -2.586a1 1 0 0 0 0 -1.414l-7.586 -7.586a1 1 0 0 0 -1.414 0l-2.586 2.586a1 1 0 0 0 0 1.414l7.586 7.586a1 1 0 0 0 1.414 0z"></path></svg>
-						<h2 class="card-title" id="frames_title">Builds</h2>
-						<span class="badge badge-ghost badge-sm" id="frames_count">1</span>
-					</div>
-					<button class="frames-add btn btn-ghost btn-sm btn-square" id="frame_add_btn" type="button" aria-label="New build" title="New build">
-						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
-					</button>
-				</header>
-				<ul class="frames-list menu menu-sm" id="frames_list"></ul>
-			</div>
-		</aside>
+        <header class="workspace-header">
+            <div class="tabs tabs-box" id="workspace_tabs" role="tablist" aria-label="Workspace tabs"></div>
+        </header>
+        <section id="splat_info" class="splat-info card bg-base-100 shadow-sm hidden" aria-live="polite"><div class="card-body"><span class="badge badge-outline">View-only splat</span><p id="splat_state"></p><div class="splat-actions"><button id="splat_download" class="btn btn-neutral btn-sm hidden" type="button">Download PLY</button><button id="splat_refresh" class="btn btn-ghost btn-sm" type="button">Refresh</button></div></div></section>
 		<div class="side-rail bg-base-100 shadow-xl border border-base-300" role="toolbar" aria-label="Tools, colors and brush">
 			<nav class="rail-tools" aria-label="Primitive tools">
 				<button class="tool-btn btn btn-ghost btn-square active" data-tool="pointer" aria-label="Pointer" title="Pointer">
@@ -161,10 +150,6 @@
 					<span>Upload session ZIP</span>
 					<input type="file" id="upload_zip_input" accept=".zip" hidden>
 				</label>
-				<button class="settings-item" id="history_toggle_btn" title="Build history - restore a previous build's splats without regenerating">
-					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8l0 4l2 2"></path><path d="M3.05 11a9 9 0 1 1 .5 4"></path><path d="M3 16v-5h5"></path></svg>
-					<span>Build history</span>
-				</button>
 				<div class="settings-divider" aria-hidden="true"></div>
 				<label class="settings-item settings-toggle" title="Overlay the original primitive colliders on the generated splats to check how well each lines up">
 					<span>Colliders</span>
@@ -179,21 +164,12 @@
 					<input type="checkbox" id="show_splat_floor_input" class="toggle toggle-sm" checked>
 				</label>
 				<div class="settings-divider" aria-hidden="true"></div>
-				<button class="settings-item" id="hf_sign_out_btn" type="button" title="Return to the sign-in page and clear this tab's Hugging Face session">
+				<button class="settings-item" id="google_sign_out_btn" type="button" title="Sign out of your WorldSplat account">
 					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5 -5l-5 -5"></path><path d="M15 12h-12"></path><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-4"></path></svg>
 					<span>Sign out</span>
 				</button>
 			</div>
 		</div>
-		<aside class="history-panel hidden" id="history_panel" aria-label="Build history">
-			<header class="history-head">
-				<span class="history-heading">Builds <span class="history-count" id="history_count"></span></span>
-				<button class="history-clear" id="history_clear_btn" type="button" title="Delete all saved builds">Clear</button>
-				<button class="history-close" id="history_close_btn" type="button" aria-label="Close build history" title="Close">x</button>
-			</header>
-			<p class="history-empty" id="history_empty">No builds yet - hit Generate and your worlds land here.</p>
-			<div class="history-list" id="history_list"></div>
-		</aside>
 		<div class="bottom-dock">
 			<div class="chat-dock">
 				<div class="gen-progress hidden" id="progress" aria-live="polite">
@@ -207,7 +183,7 @@
 					</div>
 				</div>
 				<form class="chat-bar" id="chat_form">
-					<input class="chat-input" id="chat_prompt" type="text" autocomplete="off" placeholder="Describe your scene...">
+					<input class="chat-input" id="chat_prompt" maxlength="1000" type="text" autocomplete="off" placeholder="Describe your scene...">
 					<button class="chat-send btn btn-square" id="generate_btn" type="submit" aria-label="Generate world" title="Generate">
 						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6v6a3 3 0 0 1 -3 3h-10"></path><path d="M9 18l-3 -3l3 -3"></path></svg>
 					</button>
@@ -242,6 +218,6 @@
 		<div class="fly-hint hidden" id="play_hint">WASD move &middot; Space jump &middot; Shift sprint &middot; drag look &middot; scroll zoom &middot; Esc exit</div>
 		<p class="status-toast hidden" id="status" role="alert" title="Dismiss"></p>
 	</div>
-	<script type="module" src="/scripts/editor-entry.js?v=dev-chrome-1"></script>
+	<script type="module" src="/scripts/editor-entry.js?v=google-tabs-1"></script>
 </body>
 </html>

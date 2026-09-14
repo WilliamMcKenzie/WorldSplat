@@ -1,3 +1,4 @@
+.hidden { display: none !important; }
 /* Styles for the worldsplat marketing landing page.
    The editor keeps its own styles.css — nothing here leaks into the app. */
 

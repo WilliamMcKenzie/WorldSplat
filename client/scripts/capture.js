@@ -233,17 +233,37 @@ async function captureSubject(renderer, scene, world, subject, view, includeMate
 	const prevClear = renderer.getClearColor(new THREE.Color()).clone()
 	const prevAlpha = renderer.getClearAlpha()
 
-	const edges = includeEdges ? addEdges(normalizedSubject, world) : []
+	let edges = []
+	try {
+	edges = includeEdges ? addEdges(normalizedSubject, world) : []
 	const guide = await captureTarget(renderer, scene, view, target)
 	for (const edge of edges) {
 		edge.geometry.dispose()
 		edge.removeFromParent()
 	}
+    // Persist real aligned depth and wireframe guides for backend model variants.
+    const depthMaterials = normalizedSubject.map(mesh => {
+        const original = mesh.material
+        const material = new THREE.MeshDepthMaterial({ depthPacking: THREE.BasicDepthPacking, map: original.map, alphaMap: original.alphaMap, alphaTest: original.alphaTest || 0 })
+        mesh.material = material
+        return [mesh, original, material]
+    })
+    let depthMap
+    try { depthMap = await captureTarget(renderer, scene, view, target) }
+    finally { for (const [mesh, original, material] of depthMaterials) { mesh.material = original; material.dispose() } }
+    const wireMaterials = normalizedSubject.map(mesh => { const original = mesh.material; const material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true }); mesh.material = material; return [mesh, original, material] })
+    let wireframe
+    try { wireframe = await captureTarget(renderer, scene, view, target) }
+    finally { for (const [mesh, original, material] of wireMaterials) { mesh.material = original; material.dispose() } }
 	const materialMap = includeMaterialMap ? await captureTarget(renderer, scene, view, target) : null
 	const semanticMap = semanticGroups?.length
 		? await captureSemanticMap(renderer, scene, view, target, swaps, semanticGroups)
 		: null
 
+	return { guide, materialMap, semanticMap, depthMap, wireframe }
+	} finally {
+	for (const edge of edges) { edge.geometry.dispose(); edge.removeFromParent() }
+	renderer.setRenderTarget(null)
 	restoreMaterials(swaps)
 	for (const mesh of temporarySubjects) {
 		mesh.geometry.dispose()
@@ -256,7 +276,7 @@ async function captureSubject(renderer, scene, world, subject, view, includeMate
 	for (const [mesh, visible] of shown) mesh.visible = visible
 	renderer.setClearColor(prevClear, prevAlpha)
 	target.dispose()
-	return { guide, materialMap, semanticMap }
+	}
 }
 
 // Render each logical object in one unmistakable flat ID colour. Ground is deliberately

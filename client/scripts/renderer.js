@@ -3,22 +3,16 @@ import { PackedSplats, SparkRenderer, SplatMesh } from "spark"
 import { zip, unzip } from "fflate"
 import { getConfig } from "/scripts/api.js"
 import { captureWorld, projectCaptureBoxes, FRONT_THETA, FRONT_PHI } from "/scripts/capture.js?v=tight-crop-1"
-import {
-	configureHuggingFace,
-	generateSceneOnHuggingFace,
-	getHuggingFaceAuth,
-	imageStepUsesCredits,
-	signOutHuggingFace,
-} from "/scripts/huggingface.js?v=no-floor-1"
+import { getAccount, saveTabs, listJobs, getJob, jobAsset, submitRender, logout, sessionToken } from "/scripts/backend.js"
+import { createTabSync } from "/scripts/tab-sync.js"
+import { renderWorkspaceTabs } from "/scripts/workspace-tabs.js"
+import { sceneGenerationPrompt } from "/scripts/generation-prompt.js"
 import { createGenerationImageDebugger } from "/scripts/generation-debug-images.js?v=flux-preview-1"
 import { fitSplatToBox } from "/scripts/fit.js?v=wisp-cull-2"
 import { computeObjects } from "/scripts/geometry.js"
 import { closestAxisDistance } from "/scripts/axis-drag.js?v=direct-tools-1"
 import { createPlayer } from "/scripts/player.js"
 import { createPrimitive, disposeObject, setEdgeOutlineVisible, updateEdgeOutlineColor } from "/scripts/primitives.js?v=direct-tools-1"
-import { addBuild, listBuilds, getBuildSceneSplat, deleteBuild, clearBuilds } from "/scripts/history.js"
-import { clearFramesState, loadFramesState, saveFramesState } from "/scripts/frames-store.js"
-import { loadDefaultBuildSeeds } from "/scripts/default-builds.js"
 import { estimateYawFromData } from "/scripts/yaw-core.js?v=yaw-1" // main-thread fallback when the yaw worker can't start
 import { createSky } from "/scripts/sky.js"
 import { cloneGroundStrokes, closeGroundStroke, paintGroundStroke } from "/scripts/ground-strokes.js"
@@ -238,7 +232,7 @@ const els = {
 	historyClear: document.getElementById("history_clear_btn"),
 	historyClose: document.getElementById("history_close_btn"),
 	historyEmpty: document.getElementById("history_empty"),
-	hfSignOut: document.getElementById("hf_sign_out_btn"),
+	googleSignOut: document.getElementById("google_sign_out_btn"),
 }
 
 renderer.setSize(window.innerWidth, window.innerHeight)
@@ -1218,8 +1212,7 @@ function setUiTab(tab) {
 	uiTab = tab
 	if (tab !== "build") selectPrimitive(null) // View has no block-out selection / gizmo
 	if (tab !== "view") deselectSplat() // splat selection is a View-only thing
-	if (tab === "view" && !world.generated.length) setStatus(emptyViewHint)
-	else if (els.status.textContent === emptyViewHint) setStatus("")
+	if (els.status.textContent === emptyViewHint) setStatus("")
 	if (tab === "play") enterPlay()
 	else if (wasPlay) exitPlay()
 	applyUiTab()
@@ -2509,16 +2502,7 @@ function pointerDown(event) {
 		startOrbit(event) // raw view is deliberately inspection-only
 		return
 	}
-	if (uiTab === "view") {
-		if (viewTool === "lasso") {
-			const transform = selectedSplatMeshes.size ? viewTransformHit(event) : null
-			if (transform && startSplatGroupDrag(event, transform)) return
-			startSplatLasso(event)
-			return
-		}
-		startOrbit(event)
-		return
-	}
+	if (uiTab === "view") { startOrbit(event); return }
 
 	const hitGizmo = gizmoHit(event)
 	if (hitGizmo?.object && startGizmoDrag(event, hitGizmo.object)) return
@@ -2652,57 +2636,39 @@ function syncWorldState() {
 	world.state = world.generated.length ? "generated" : "draft"
 }
 
+function allWorkspaceFrames() { return [...frames.build, ...frames.view].sort((a, b) => a.id - b.id) }
+function activeWorkspaceFrame() { return frames[uiTab === "build" ? "build" : "view"].find(f => f.id === activeFrameId[uiTab === "build" ? "build" : "view"]) }
 function renderFramesPanel() {
-	if (!els.framesList) return
-	const tab = uiTab === "play" ? "view" : uiTab // Play shares View's splat frames (panel hidden there)
-	const building = tab === "build"
-	const panelTitle = building ? "Builds" : "Results"
-	const addTitle = building ? "New build" : "New result"
-	els.framesTitle.textContent = panelTitle
-	if (els.framesCount) els.framesCount.textContent = String(frames[tab].length)
-	if (els.framesPanel) els.framesPanel.setAttribute("aria-label", panelTitle)
-	if (els.frameAdd) {
-		els.frameAdd.title = addTitle
-		els.frameAdd.setAttribute("aria-label", addTitle)
-	}
-	els.framesList.replaceChildren()
-	let activeRow = null
-	for (const frame of frames[tab]) {
-		const active = frame.id === activeFrameId[tab]
-		const item = document.createElement("li")
-		item.className = "frame-item" + (active ? " is-active" : "")
-		const row = document.createElement("button")
-		row.className = "frame-row" + (active ? " menu-active" : "")
-		row.type = "button"
-		row.setAttribute("aria-pressed", String(active))
-		if (active) activeRow = row
-		const name = document.createElement("span")
-		name.className = "frame-name"
-		name.textContent = frame.name
-		name.title = frame.name
-		const del = document.createElement("button")
-		del.className = "frame-del btn btn-ghost btn-xs btn-square"
-		del.type = "button"
-		del.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"></path><path d="M18 6l-12 12"></path></svg>'
-		del.title = `Delete ${frame.name}`
-		del.setAttribute("aria-label", `Delete ${frame.name}`)
-		del.addEventListener("click", event => {
-			event.stopPropagation()
-			deleteFrame(tab, frame.id)
-		})
-		row.append(name)
-		row.addEventListener("click", () => activateFrame(tab, frame.id))
-		item.append(row, del)
-		els.framesList.appendChild(item)
-	}
-	activeRow?.scrollIntoView({ block: "nearest" })
-	persistFramesSoon() // every frame add/delete/switch re-renders, so this catches them all
+ const items = allWorkspaceFrames().map(f => ({ id: f.tabId, name: f.name, type: frames.build.includes(f) ? "build" : "splat", status: f.job?.status }))
+ renderWorkspaceTabs(document.getElementById("workspace_tabs"), items, activeWorkspaceFrame()?.tabId, {
+  select: id => { const f = allWorkspaceFrames().find(f => f.tabId === id); if (f) activateFrame(frames.build.includes(f) ? "build" : "view", f.id).catch(error => setStatus(error.message)) },
+  close: id => { const f = allWorkspaceFrames().find(f => f.tabId === id); if (f) deleteFrame(frames.build.includes(f) ? "build" : "view", f.id).catch(error => setStatus(error.message)) },
+  rename: id => {
+   const f = allWorkspaceFrames().find(f => f.tabId === id); if (!f) return
+   const dialog = document.getElementById("rename_tab_dialog")
+   dialog.dataset.tabId = id
+   document.getElementById("rename_tab_input").value = f.name
+   dialog.showModal()
+   document.getElementById("rename_tab_input").select()
+  },
+ })
+ updateSplatInfo()
+ persistFramesSoon()
+}
+function updateSplatInfo() {
+ const frame = activeWorkspaceFrame()
+ const visible = uiTab !== "build" && frame
+ document.getElementById("splat_info").classList.toggle("hidden", !visible)
+ if (!visible) return
+ const labels = { queued: "Queued — you can keep building in another tab.", rendering: "Adding detail to your scene…", splatting: "Creating your 3D splat…", completed: "Drag to orbit · scroll to zoom", failed: frame.job?.error || "This render could not be completed." }
+ document.getElementById("splat_state").textContent = frame.loadError || (frame.loading ? "Loading your splat…" : labels[frame.job?.status] || "Checking render…")
+ document.getElementById("splat_download").classList.toggle("hidden", frame.job?.status !== "completed")
 }
 
 // -- Build frames: snapshots of the whole block-out (prims + tiles + heights + paint). --
 
 function pushBuildFrame(name) {
-	const frame = { id: ++frameSeq, name: name ?? frameLabel("build", frames.build.length + 1), snapshot: null }
+	const frame = { id: ++frameSeq, tabId: crypto.randomUUID(), name: name ?? frameLabel("build", frames.build.length + 1), snapshot: null }
 	frames.build.push(frame)
 	activeFrameId.build = frame.id
 	renderFramesPanel()
@@ -2711,7 +2677,7 @@ function pushBuildFrame(name) {
 
 function snapshotActiveBuildFrame() {
 	const current = frames.build.find(f => f.id === activeFrameId.build)
-	if (current) current.snapshot = snapshotBuildWorld()
+	if (current && uiTab === "build") current.snapshot = snapshotBuildWorld()
 }
 
 function snapshotBuildWorld() {
@@ -2781,24 +2747,6 @@ function emptyBuildSnapshot() {
 	}
 }
 
-async function seedDefaultBuildFrames() {
-	const seeds = await loadDefaultBuildSeeds()
-	for (const seed of seeds) {
-		frames.build.push({
-			id: ++frameSeq,
-			name: seed.name,
-			snapshot: { prims: seed.prims, baseGroundColor, prompt: "" },
-		})
-	}
-	const first = frames.build[0]
-	if (!first) return false
-	activeFrameId.build = first.id
-	await applyBuildSnapshot(first.snapshot)
-	renderFramesPanel()
-	syncViewGate()
-	return true
-}
-
 async function applyBuildSnapshot(snap) {
 	// Persistence guard: while a snapshot is being applied the live world is half-built,
 	// so serializeFramesState must not re-snapshot the active frame from it.
@@ -2828,6 +2776,7 @@ async function applyBuildSnapshotInner(snap) {
 	await applyGroundPaintData(storedGround, sheet)
 	world.baseGroundColor = snap.baseGroundColor ?? baseGroundColor
 	world.prompt = snap.prompt ?? ""
+    els.chatPrompt.value = world.prompt
 	const prims = snap.prims?.primitives ?? []
 	const created = prims.map(p => {
 		if (!p?.type) return null
@@ -2859,7 +2808,7 @@ function beginNewSplatFrame() {
 	// Hide every existing frame's splats; the new frame becomes the live target that
 	// world.addGenerated() seats into.
 	for (const f of frames.view) for (const rec of f.records) rec.mesh.visible = false
-	const frame = { id: ++frameSeq, name: frameLabel("view", frames.view.length + 1), records: [] }
+	const frame = { id: ++frameSeq, tabId: crypto.randomUUID(), name: frameLabel("view", frames.view.length + 1), records: [] }
 	frames.view.push(frame)
 	activeFrameId.view = frame.id
 	world.generated = frame.records
@@ -2869,167 +2818,165 @@ function beginNewSplatFrame() {
 }
 
 async function activateFrame(tab, id) {
-	if (generating) return
-	const frame = frames[tab].find(f => f.id === id)
-	if (!frame || activeFrameId[tab] === id) return
-	if (tab === "build") {
-		snapshotActiveBuildFrame()
-		activeFrameId.build = id
-		await applyBuildSnapshot(frame.snapshot ?? emptyBuildSnapshot())
-	} else {
-		deselectSplat() // the selection belongs to the frame being left
-		activeFrameId.view = id
-		for (const f of frames.view) for (const rec of f.records) rec.mesh.visible = false
-		world.generated = frame.records
-		syncWorldState()
-		applyUiTab()
-	}
-	renderFramesPanel()
-	syncViewGate()
+ if (generating || switchingFrame) return
+ const frame = frames[tab].find(f => f.id === id)
+ if (!frame) return
+ if (activeFrameId[tab] === id && uiTab === tab) { if (tab === "view") await loadSplatFrame(frame); return }
+ switchingFrame = true
+ try {
+  snapshotActiveBuildFrame()
+  const previous = activeWorkspaceFrame()
+  if (previous) previous.camera = { target: orbit.target.clone(), radius: orbit.radius, theta: orbit.theta, phi: orbit.phi }
+  clearRawSplatPreview()
+  deselectSplat()
+  for (const f of frames.view) for (const rec of f.records) rec.mesh.visible = false
+  activeFrameId[tab] = id
+  if (tab === "build") {
+   uiTab = "build"
+   await applyBuildSnapshot(frame.snapshot ?? emptyBuildSnapshot())
+  } else {
+   uiTab = "view"
+   world.generated = frame.records
+   syncWorldState()
+   applyUiTab()
+  }
+  if (frame.camera) { orbit.target.copy(frame.camera.target); orbit.radius = frame.camera.radius; orbit.theta = frame.camera.theta; orbit.phi = frame.camera.phi }
+  else if (tab === "build") { orbit.target.set(0, floorSize * .05, 0); orbit.radius = floorSize * 2.3; orbit.theta = FRONT_THETA; orbit.phi = FRONT_PHI }
+  updateCamera()
+  renderFramesPanel()
+ } finally { switchingFrame = false }
+ if (tab === "view") await loadSplatFrame(frame)
 }
+let switchingFrame = false
 
 async function deleteFrame(tab, id) {
-	if (generating) return
-	const list = frames[tab]
-	const idx = list.findIndex(f => f.id === id)
-	if (idx < 0) return
-	const frame = list[idx]
-	if (tab === "view") for (const rec of frame.records) disposeObject(rec.mesh)
-	list.splice(idx, 1)
-	if (activeFrameId[tab] === id) {
-		activeFrameId[tab] = 0
-		if (tab === "build") {
-			const next = list.at(-1)
-			if (next) {
-				activeFrameId.build = next.id
-				await applyBuildSnapshot(next.snapshot ?? emptyBuildSnapshot())
-			} else {
-				// Build is the first stage now, so deleting its last frame immediately
-				// replaces it with a fresh empty build.
-				await applyBuildSnapshot(emptyBuildSnapshot())
-				pushBuildFrame()
-				snapshotActiveBuildFrame()
-			}
-		} else {
-			const next = list.at(-1)
-			if (next) {
-				activeFrameId.view = next.id
-				world.generated = next.records
-				for (const rec of next.records) rec.mesh.visible = uiTab !== "build"
-			} else {
-				world.generated = []
-				if (uiTab !== "build") setUiTab("build")
-			}
-			syncWorldState()
-			applyUiTab()
-		}
-	}
-	renderFramesPanel()
-	syncViewGate()
+ if (generating || switchingFrame) return
+ const list = frames[tab]
+ const index = list.findIndex(f => f.id === id)
+ if (index < 0) return
+ snapshotActiveBuildFrame()
+ const frame = list[index]
+ const wasActive = activeWorkspaceFrame() === frame
+ list.splice(index, 1)
+ if (tab === "view") for (const rec of frame.records) disposeObject(rec.mesh)
+ if (wasActive) {
+  activeFrameId[tab] = 0
+  if (tab === "view") world.generated = []
+  const next = list[Math.min(index, list.length - 1)] || frames.build.at(-1) || frames.view.at(-1)
+  if (next) await activateFrame(frames.build.includes(next) ? "build" : "view", next.id)
+  else { uiTab = "build"; await applyBuildSnapshot(emptyBuildSnapshot()); pushBuildFrame(); snapshotActiveBuildFrame() }
+ }
+ renderFramesPanel()
+ await persistFramesNow()
+}
+async function addFrameForActiveTab() {
+ if (generating || switchingFrame || allWorkspaceFrames().length >= 100) return
+ snapshotActiveBuildFrame()
+ const frame = { id: ++frameSeq, tabId: crypto.randomUUID(), name: frameLabel("build", frames.build.length + 1), snapshot: emptyBuildSnapshot() }
+ frames.build.push(frame)
+ await activateFrame("build", frame.id)
+ await persistFramesNow()
 }
 
-function addFrameForActiveTab() {
-	if (generating) return
-	if (uiTab === "build") {
-		snapshotActiveBuildFrame()
-		pushBuildFrame()
-		applyBuildSnapshot(emptyBuildSnapshot())
-	} else {
-		beginNewSplatFrame()
-		applyUiTab()
-	}
-	renderFramesPanel()
-}
-
-// --- Frame persistence -----------------------------------------------------------
-// Build frames survive reloads: every frame change (and every block-out edit, debounced)
-// writes the serialized list to IndexedDB, and boot restores it. Splat frames are not
-// persisted — their meshes exist only as fitted GPU splats; the Build
-// history panel (history.js) is the durable store for generated splats.
-
+// Account tabs are saved in PostgreSQL. No build, job or account data is restored from another user's browser cache.
 let applyingBuildSnapshot = 0
 let persistTimer = 0
-
-function serializeFramesState() {
-	// Live edits land in their frames before writing — unless a snapshot swap is mid-
-	// flight, when the active frame's stored snapshot is already the truth.
-	if (!applyingBuildSnapshot && !buildHistoryBusy) {
-		snapshotActiveBuildFrame()
-	}
-	return {
-		frameSeq,
-		activeBuildId: activeFrameId.build,
-		// Undo/redo stacks (frame.history) stay session-local — 30 snapshots per frame
-		// is too heavy to rewrite on every edit.
-		build: frames.build.map(f => ({ id: f.id, name: f.name, snapshot: f.snapshot })),
-		camShots: camShots.map(s => ({ position: [...s.position], quaternion: [...s.quaternion] })),
-	}
-}
-
-function persistFramesSoon() {
-	clearTimeout(persistTimer)
-	persistTimer = setTimeout(persistFramesNow, 800)
-}
-
-function persistFramesNow() {
-	clearTimeout(persistTimer)
-	if (wipingAccountData) return // a fresh-account wipe is in flight — don't resurrect state
-	saveFramesState(serializeFramesState()).catch(err => console.warn("Frame save failed:", err))
-}
-
-// Dev-panel "Simulate new account": wipe everything a first-time visitor wouldn't have
-// (saved frames, splat history, worldsketch.* settings — the HF sign-in stays) and
-// reload, so the boot path seeds two random default maps exactly like a fresh browser.
+let persistenceReady = false
+let lastQueuedTabs = ""
 let wipingAccountData = false
-
-async function simulateNewAccount() {
-	if (wipingAccountData) return
-	wipingAccountData = true // also blocks the pagehide flush from re-saving during reload
-	setStatus("Wiping saved data…")
-	const wipes = await Promise.allSettled([clearFramesState(), clearBuilds()])
-	for (const wipe of wipes) {
-		if (wipe.status === "rejected") console.warn("Account wipe step failed:", wipe.reason)
-	}
-	try {
-		for (const key of Object.keys(localStorage)) {
-			if (key.startsWith("worldsketch.")) localStorage.removeItem(key)
-		}
-	} catch {}
-	location.reload()
-}
-
-// Flush on tab-hide/close — the debounce window would otherwise drop the last edits.
-addEventListener("pagehide", persistFramesNow)
-document.addEventListener("visibilitychange", () => {
-	if (document.visibilityState === "hidden") persistFramesNow()
+let workspaceSaveError = ""
+const workspaceBearer = sessionToken()
+const tabSync = createTabSync(tabs => saveTabs(tabs, workspaceBearer), (state, error) => {
+ if (state === "error") {
+  workspaceSaveError = error?.message || "Your changes could not be saved. They will retry when your connection returns."
+  setStatus(workspaceSaveError)
+ } else if (state === "saved" && workspaceSaveError) {
+  if (els.status.textContent === workspaceSaveError) setStatus("")
+  workspaceSaveError = ""
+ }
 })
-
-// Rebuild the frame lists from the last session and re-enter the active build frame.
-// Returns false (leaving state untouched) when there is nothing saved, so boot can
-// fall through to the fresh-world path.
+function serializeTabs() {
+ if (!applyingBuildSnapshot && !buildHistoryBusy) snapshotActiveBuildFrame()
+ return allWorkspaceFrames().filter(f => frames.build.includes(f) || f.jobId).map(f => frames.build.includes(f)
+  ? { id: f.tabId, type: "build", name: f.name, snapshot: f.snapshot ?? emptyBuildSnapshot() }
+  : { id: f.tabId, type: "splat", name: f.name, job_id: f.jobId })
+}
+function persistFramesSoon() {
+ if (!persistenceReady || wipingAccountData || applyingBuildSnapshot) return
+ clearTimeout(persistTimer)
+ // Queue the snapshot immediately so beforeunload can detect unsaved changes during debounce.
+ const tabs = serializeTabs(), encoded = JSON.stringify(tabs)
+ if (encoded !== lastQueuedTabs) { tabSync.queue(tabs); lastQueuedTabs = encoded }
+ persistTimer = setTimeout(() => persistFramesNow().catch(() => {}), 800)
+}
+async function persistFramesNow() {
+ clearTimeout(persistTimer)
+ if (!persistenceReady || wipingAccountData || applyingBuildSnapshot) return
+ const tabs = serializeTabs(), encoded = JSON.stringify(tabs)
+ if (encoded !== lastQueuedTabs) { tabSync.queue(tabs); lastQueuedTabs = encoded }
+ await tabSync.flush()
+}
+async function simulateNewAccount() { setStatus("Your workspace belongs to your Google account. Use the + button to start a new build.") }
+addEventListener("beforeunload", event => { if (tabSync.dirty) { event.preventDefault(); event.returnValue = "" } })
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") persistFramesNow().catch(() => {}) })
+addEventListener("online", () => persistFramesNow().catch(() => {}))
 async function restoreFramesState() {
-	let saved = null
-	try {
-		saved = await loadFramesState()
-	} catch (err) {
-		console.warn("Frame restore failed:", err)
-	}
-	if (!saved?.build?.length) return false
-	frames.build = saved.build.map(f => ({ id: f.id, name: f.name, snapshot: f.snapshot ?? null }))
-	frameSeq = Math.max(saved.frameSeq ?? 0, ...frames.build.map(f => f.id), 0)
-	const buildFrame = frames.build.find(f => f.id === saved.activeBuildId) ?? frames.build.at(-1)
-	activeFrameId.build = buildFrame.id
-	camShots.length = 0
-	for (const s of saved.camShots ?? []) {
-		if (Array.isArray(s?.position) && Array.isArray(s?.quaternion)) {
-			camShots.push({ id: ++nextShotId, position: s.position, quaternion: s.quaternion })
-		}
-	}
-	renderShotChips()
-	await applyBuildSnapshot(buildFrame.snapshot ?? emptyBuildSnapshot())
-	renderFramesPanel()
-	syncViewGate()
-	return true
+ const saved = getAccount()?.tabs
+ if (!Array.isArray(saved)) throw new Error("Your saved workspace could not be read.")
+ for (const t of saved) {
+  if (t.type === "build") frames.build.push({ id: ++frameSeq, tabId: t.id, name: t.name, snapshot: t.snapshot })
+  else if (t.type === "splat") frames.view.push({ id: ++frameSeq, tabId: t.id, name: t.name, jobId: t.job_id, records: [] })
+ }
+ if (!saved.length) return false
+ const first = frames.build[0] || frames.view[0]
+ await activateFrame(frames.build.includes(first) ? "build" : "view", first.id)
+ return true
+}
+async function loadSplatFrame(frame) {
+ if (!frame.jobId || frame.loading) return
+ frame.loading = true; frame.loadError = ""; updateSplatInfo()
+ try {
+  frame.job = await getJob(frame.jobId)
+  if (frame.job.status !== "completed" || frame.records.length) return
+  const blob = await jobAsset(frame.jobId, "splat")
+  const mesh = new SplatMesh({ fileBytes: new Uint8Array(await blob.arrayBuffer()), fileName: "splat.ply" })
+  try {
+   await mesh.initialized
+   if (!frames.view.includes(frame)) { disposeObject(mesh); return }
+   mesh.rotation.x = Math.PI
+   mesh.updateMatrixWorld(true)
+   const bounds = new THREE.Box3(), point = new THREE.Vector3()
+   mesh.packedSplats?.forEachSplat((_i, center, _scales, _rotation, opacity) => {
+    if (opacity < .03 || ![center.x, center.y, center.z].every(Number.isFinite)) return
+    bounds.expandByPoint(point.copy(center).applyMatrix4(mesh.matrixWorld))
+   })
+   if (bounds.isEmpty()) throw new Error("The splat contains no visible points.")
+   const size = bounds.getSize(new THREE.Vector3()), center = bounds.getCenter(new THREE.Vector3())
+   const scale = 16 / Math.max(size.x, size.y, size.z, .001)
+   mesh.scale.setScalar(scale)
+   mesh.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale)
+   mesh.userData.genKind = "scene"
+   frame.records.push({ mesh })
+   world.group.add(mesh)
+   frame.camera ||= { target: new THREE.Vector3(0, size.y * scale * .4, 0), radius: 30, theta: FRONT_THETA, phi: FRONT_PHI }
+   mesh.visible = uiTab === "view" && activeFrameId.view === frame.id
+   if (mesh.visible) { world.generated = frame.records; orbit.target.copy(frame.camera.target); orbit.radius = frame.camera.radius; updateCamera(); syncWorldState(); applyUiTab() }
+  } catch (error) { disposeObject(mesh); throw error }
+ } catch (error) { frame.loadError = error.message }
+ finally { frame.loading = false; renderFramesPanel() }
+}
+let refreshingJobs = false
+async function refreshPendingJobs() {
+ if (refreshingJobs || !persistenceReady) return
+ refreshingJobs = true
+ try {
+  for (const frame of [...frames.view]) {
+   if (!frame.jobId || frame.loading || ["completed", "failed"].includes(frame.job?.status)) continue
+   try { frame.job = await getJob(frame.jobId); frame.loadError = ""; if (uiTab === "view" && activeFrameId.view === frame.id && frame.job.status === "completed") await loadSplatFrame(frame) }
+   catch (error) { frame.loadError = error.message }
+  }
+  renderFramesPanel()
+ } finally { refreshingJobs = false }
 }
 
 // --- Generation -------------------------------------------------------------
@@ -3066,9 +3013,9 @@ function yieldForProgressPaint() {
 function syncGenerateButton() {
 	els.generate.disabled = generating
 	els.generate.classList.toggle("is-disabled", generating)
-	const signedIn = getHuggingFaceAuth().signedIn
-	els.generate.title = generating ? "Generating…" : signedIn ? "Generate with Hugging Face" : "Sign in with Hugging Face to generate"
-	els.generate.setAttribute("aria-label", signedIn ? "Generate world" : "Sign in with Hugging Face and generate")
+	const signedIn = Boolean(getAccount())
+	els.generate.title = generating ? "Generating…" : signedIn ? "Render this build" : "Sign in with Google to render"
+	els.generate.setAttribute("aria-label", signedIn ? "Generate world" : "Sign in with Google and render")
 	// Make the frozen state visible: not-allowed cursor over both canvases, and no
 	// placement affordance left glowing.
 	document.body.classList.toggle("is-generating", generating)
@@ -3079,32 +3026,7 @@ function syncGenerateButton() {
 }
 
 // Build is always available; View unlocks once the single scene splat has landed.
-function syncTabGates() {
-	const gate = (name, count, busy) => {
-		const btn = els.viewTabs.find(button => button.dataset.viewTab === name)
-		if (!btn) return
-		btn.classList.remove("hidden")
-		btn.disabled = busy || count === 0 // always visible; greyed until it has content
-		btn.classList.toggle("is-loading", busy)
-	}
-	gate("build", frames.build.length, false)
-	gate("view", frames.view.length, splatting)
-	gate("play", frames.view.length, splatting) // Play walks the generated splats, so it unlocks with View
-	// With only Build available the bar is pure chrome — show it once a second tab
-	// has content (or is being generated, so the View spinner stays visible). On
-	// reveal it fades in FROM white (see .tabs-enter in styles.css) instead of popping.
-	const tabBar = document.querySelector(".view-tabs")
-	if (tabBar) {
-		const collapse = frames.view.length === 0 && !splatting
-		if (collapse) {
-			tabBar.classList.add("hidden")
-			tabBar.classList.remove("tabs-enter")
-		} else if (tabBar.classList.contains("hidden")) {
-			tabBar.classList.remove("hidden")
-			tabBar.classList.add("tabs-enter")
-		}
-	}
-}
+function syncTabGates() { document.querySelector(".view-tabs")?.classList.add("hidden") }
 const syncViewGate = syncTabGates // existing call sites
 
 function setDevControlsVisible(visible) {
@@ -6215,144 +6137,34 @@ function segmentSceneSplat(hasGround = true) {
 
 // Whole-scene generation: one capture, one image edit, one TripoSplat call.
 async function generateWorld(prompt) {
-	if (generating) return
-	const hasGround = Boolean(world.groundInkBounds())
-	if (!hasGround && !world.primitives.length) {
-		// The status line is CSS-hidden, so surface the hint where the user is looking.
-		els.chatPrompt.value = ""
-		els.chatPrompt.placeholder = "Draw some ground with the paint tool first…"
-		return
-	}
-	if (!getHuggingFaceAuth().signedIn) {
-		snapshotActiveBuildFrame()
-		location.assign("/")
-		return
-	}
-	generating = true
-	splatting = true
-	world.prompt = prompt
-	window.posthog?.capture("generate_started", { has_ground: hasGround, prompt_length: prompt.length })
-	syncGenerateButton()
-	setStatus("")
-	clearRawSplatPreview()
-	beginNewSplatFrame()
-	setUiTab("build")
-	showProgress(0, 1, "Capturing complete scene…")
-	clearGenerationDebugImages()
-
-	try {
-		const genStart = performance.now()
-		const cfg = await getConfig()
-		applyRuntimeConfig(cfg)
-		configureHuggingFace(cfg?.generation)
-		generationAbort = new AbortController()
-
-		const box = wholeSceneBox()
-		const subjectMeshes = hasGround ? world.allBlockoutMeshes() : [...world.primitives]
-		const objectGroups = computeObjects(world.primitives)
-		const tCap = performance.now()
-		// Capture from the isometric corner NEAREST the user's current view, not the raw
-		// orbit angles: quarter-turn offsets keep the whole proven seating geometry intact
-		// (the yaw estimator's candidate set stays exact and fit.js's 90°/270° extent swap
-		// is exact, not approximate), while an arbitrary azimuth/elevation seeds Tripo with
-		// a viewpoint the seating pipeline can only approximate.
-		const QUARTER = Math.PI / 2
-		const viewAngles = {
-			theta: FRONT_THETA + Math.round((orbit.theta - FRONT_THETA) / QUARTER) * QUARTER,
-			phi: FRONT_PHI,
-		}
-		const capture = await captureWorldQuiet(renderer, scene, world, box, objectGroups, viewAngles)
-		logGenerationDebugImage("capture", "Block-out capture sent to the image model", capture.guide)
-		logGenerationDebugImage("structure", imageStepUsesCredits()
-			? "Aligned structural map (not sent on the inference-credit route)"
-			: "Aligned structural map sent to the image model", capture.semanticMap)
-		const captureMs = performance.now() - tCap
-		// The image editor is asked to preserve the camera and composition, so the original object
-		// bounds remain the most reliable boxes for later splat segmentation.
-		sceneImageBoxes = projectCaptureBoxes(objectGroups, world.groundInkBounds(), box, capture)
-
-		sceneSplat = null
-		sceneSession = null
-		let generatedOutputImage = null
-		showProgress(0, 100, "Sending the scene to Hugging Face…")
-		const { bytes } = await generateSceneOnHuggingFace({
-			prompt,
-			image: capture.guide,
-			geometryImage: capture.semanticMap,
-			hasGround: Boolean(world.groundInkBounds()), // objects-only scenes get the no-floor prompt variant
-			signal: generationAbort.signal,
-			onProgress: (fraction, label) => showProgress(Math.round(fraction * 100), 100, label),
-			onImageReady: image => {
-				generatedOutputImage = image // orientation ground truth for the yaw/mirror estimate
-				logGenerationDebugImage("output", "Final detailed image sent to TripoSplat", image)
-			},
-		})
-		showProgress(97, 100, "Analyzing the 3D scene…")
-		await yieldForProgressPaint()
-		// Fit a copy so sceneSplat retains the pristine TripoSplat bytes for ZIP/history.
-		// Preserve the one-shot reconstruction's proportions with a uniform fit. The
-		// terrain and objects share one cloud, so independently forcing X and Z onto the
-		// block-out footprint would stretch/compress every object along with the floor.
-		// Estimate every one-shot scene's quarter-turn from its content. The config yaw is
-		// only a fallback when a scene is too monochrome or symmetric to disambiguate.
-		const captureYawDeg = captureProjectionBasis(capture.theta, capture.phi).yawOffsetDeg
-		const sceneEstimate = await estimateSceneYaw(bytes, subjectMeshes, capture.guide, capture, generatedOutputImage)
-		const sceneYawDeg = sceneEstimate?.yawDeg ?? (sceneFit.yawDeg + captureYawDeg)
-		const sceneMirrorZ = sceneEstimate?.mirrorZ ?? false
-		showProgress(98, 100, "Loading the 3D scene…")
-		await yieldForProgressPaint()
-		const seatedScene = await seatScene(bytes.slice(), box, {
-			yawDeg: sceneYawDeg,
-			mirrorZ: sceneMirrorZ,
-			yOffset: sceneFit.yOffset,
-		})
-		sceneSplat = bytes
-		sceneSession = {
-			hasGround,
-			yawDeg: sceneYawDeg,
-			mirrorZ: sceneMirrorZ,
-			captureTheta: capture.theta,
-			capturePhi: capture.phi,
-			imageBoxes: sceneImageBoxes,
-		}
-		// Carve the one splat into per-object pieces so View can move them; a segmentation
-		// failure must never sink the completed generation — the monolith is a fine fallback.
-		// Off by default (it freezes the tab); the devtools checkbox opts back in, and the
-		// dev panel's "Apply to current scene" can still separate this scene afterwards.
-		const splatCount = seatedScene?.packedSplats?.numSplats ?? 0
-		const tooDenseToSegment = splatCount > MAX_AUTOMATIC_SEGMENT_SPLATS
-		const segmentationSkipped = !autoSegmentationEnabled || tooDenseToSegment
-		showProgress(99, 100, segmentationSkipped ? "Finalizing the 3D scene…" : "Separating scene objects…")
-		await yieldForProgressPaint()
-		if (tooDenseToSegment) {
-			console.warn(`[segment] skipped automatic separation for ${splatCount.toLocaleString()} splats to keep the browser responsive`)
-		} else if (!autoSegmentationEnabled) {
-			console.log("[segment] automatic separation is off (devtools checkbox) — scene kept as one piece")
-		} else {
-			try { segmentSceneSplat(hasGround) } catch (error) { console.warn("segment:", error) }
-		}
-
-		console.log(`[timing] whole scene ${((performance.now() - genStart) / 1000).toFixed(1)}s — one capture ${(captureMs / 1000).toFixed(1)}s · one texture edit · one TripoSplat request`)
-
-		world.state = "generated"
-		splatting = false
-		applyOverlayVisibility()
-		await playGenerationCutscene()
-		saveBuildToHistory(world.prompt)
-		window.posthog?.capture("generate_completed", { duration_s: Math.round((performance.now() - genStart) / 1000) })
-		showProgress(1, 1, "Done")
-		if (tooDenseToSegment) setStatus("Scene loaded as one piece because it was too dense to separate safely in the browser")
-		window.setTimeout(hideProgress, 1000)
-	} catch (error) {
-		window.posthog?.capture("generate_failed", { error: error?.message })
-		setStatus(error.message || "Generation failed")
-		hideProgress()
-	} finally {
-		generationAbort = null
-		generating = false
-		splatting = false
-		syncGenerateButton()
-	}
+ if (generating || uiTab !== "build") return
+ if (!getAccount()) { location.assign("/"); return }
+ const hasGround = Boolean(world.groundInkBounds())
+ if (!hasGround && !world.primitives.length) { setStatus("Add a block or draw some ground first."); return }
+ if (allWorkspaceFrames().length >= 100) { setStatus("Close a tab before creating another render."); return }
+ generating = true; syncGenerateButton(); setStatus("")
+ const build = frames.build.find(f => f.id === activeFrameId.build)
+ world.prompt = prompt
+ snapshotActiveBuildFrame()
+ showProgress(0, 1, "Saving your build…")
+ try {
+  await persistFramesNow()
+  const capture = await captureWorldQuiet(renderer, scene, world, wholeSceneBox(), computeObjects(world.primitives), { theta: FRONT_THETA, phi: FRONT_PHI })
+  const inputHash = JSON.stringify(build.snapshot)
+  // A lost HTTP response retries the same provider job when the unchanged build is rendered again.
+  if (build.pendingRender?.inputHash !== inputHash) build.pendingRender = { inputHash, requestID: crypto.randomUUID() }
+  showProgress(.5, 1, "Sending your build…")
+  const job = await submitRender({ prompt: sceneGenerationPrompt(prompt, { hasGround }), snapshot: capture.guide, depth: capture.depthMap, wireframe: capture.wireframe, requestID: build.pendingRender.requestID })
+  delete build.pendingRender
+  let frame = frames.view.find(f => f.jobId === job.id)
+  if (!frame) { frame = { id: ++frameSeq, tabId: crypto.randomUUID(), name: `${build.name.slice(0, 40)} · Splat`, jobId: job.id, job, records: [] }; frames.view.push(frame) }
+  // Persist the job reference before switching views; it survives browser closure while Temporal works.
+  renderFramesPanel()
+  await persistFramesNow()
+  generating = false
+  await activateFrame("view", frame.id)
+ } catch (error) { setStatus(error.message || "Could not render this build.") }
+ finally { generating = false; splatting = false; hideProgress(); syncGenerateButton() }
 }
 
 async function retuneCurrentSceneSegmentation() {
@@ -6870,174 +6682,6 @@ function downloadBlob(blob, filename) {
 	URL.revokeObjectURL(url)
 }
 
-// --- Build history ----------------------------------------------------------
-
-let historyOpen = false
-
-// Render the current scene to a small offscreen target and return a JPEG data URL for
-// the history thumbnail. Independent of the live framebuffer (same render-to-target
-// trick as screenshotScene). Returns "" on any failure — a thumb is never essential.
-function captureThumb(maxW = 320) {
-	try {
-		const fullW = renderer.domElement.width
-		const fullH = renderer.domElement.height
-		if (!fullW || !fullH) return ""
-		const scale = Math.min(1, maxW / fullW)
-		const w = Math.max(1, Math.round(fullW * scale))
-		const h = Math.max(1, Math.round(fullH * scale))
-		const target = new THREE.WebGLRenderTarget(w, h)
-		try {
-			renderer.setRenderTarget(target)
-			renderer.render(scene, camera)
-			const pixels = new Uint8Array(w * h * 4)
-			renderer.readRenderTargetPixels(target, 0, 0, w, h, pixels)
-			const canvas = document.createElement("canvas")
-			canvas.width = w
-			canvas.height = h
-			const ctx = canvas.getContext("2d")
-			const image = ctx.createImageData(w, h)
-			for (let y = 0; y < h; y++) {
-				const src = y * w * 4
-				const dst = (h - y - 1) * w * 4 // GL reads bottom-up; flip to top-down
-				image.data.set(pixels.subarray(src, src + w * 4), dst)
-			}
-			ctx.putImageData(image, 0, 0)
-			return canvas.toDataURL("image/jpeg", 0.62)
-		} finally {
-			renderer.setRenderTarget(null)
-			target.dispose()
-		}
-	} catch {
-		return ""
-	}
-}
-
-// Snapshot the just-completed build (block-out + pristine scene splat + prompt + a
-// thumbnail) into persistent history. Best-effort: never blocks or breaks
-// generation if storage fails. Fired (not awaited) from generateWorld.
-async function saveBuildToHistory(prompt) {
-	if (!sceneSplat || !sceneSession) return
-	const thumb = captureThumb()
-	const primitives = JSON.stringify(serializePrimitives())
-	try {
-		await addBuild({ prompt, thumb, scene: sceneSession, primitives, splat: sceneSplat })
-		await refreshHistoryPanel()
-	} catch (err) {
-		console.warn("history save failed:", err.message || err)
-	}
-}
-
-function relTime(ts) {
-	const s = Math.max(0, Math.round((Date.now() - ts) / 1000))
-	if (s < 60) return "just now"
-	const m = Math.round(s / 60)
-	if (m < 60) return `${m}m ago`
-	const h = Math.round(m / 60)
-	if (h < 24) return `${h}h ago`
-	return `${Math.round(h / 24)}d ago`
-}
-
-// Rebuild the history panel list from IndexedDB (newest first). Also keeps the count
-// badge + empty-state in sync so it's right whether the panel is open or closed.
-async function refreshHistoryPanel() {
-	if (!els.historyList) return
-	let builds = []
-	try { builds = await listBuilds() } catch (err) { console.warn("history list failed:", err.message || err) }
-	if (els.historyCount) els.historyCount.textContent = builds.length ? String(builds.length) : ""
-	if (els.historyEmpty) els.historyEmpty.classList.toggle("hidden", builds.length > 0)
-	els.historyList.replaceChildren()
-	for (const b of builds) els.historyList.appendChild(historyItem(b))
-}
-
-function historyItem(b) {
-	const item = document.createElement("div")
-	item.className = "history-item"
-
-	const thumbBtn = document.createElement("button")
-	thumbBtn.className = "history-thumb"
-	thumbBtn.title = "Restore this build"
-	if (b.thumb) {
-		const img = document.createElement("img")
-		img.src = b.thumb
-		img.alt = b.prompt || "build"
-		thumbBtn.appendChild(img)
-	} else {
-		thumbBtn.textContent = "—"
-	}
-	thumbBtn.addEventListener("click", () => restoreBuild(b.id))
-
-	const meta = document.createElement("button")
-	meta.className = "history-meta"
-	const title = document.createElement("div")
-	title.className = "history-title"
-	title.textContent = b.prompt?.trim() || "Untitled build"
-	title.title = b.prompt || ""
-	const sub = document.createElement("div")
-	sub.className = "history-sub"
-	sub.textContent = `one-shot · ${relTime(b.ts)}`
-	meta.append(title, sub)
-	meta.addEventListener("click", () => restoreBuild(b.id))
-
-	const del = document.createElement("button")
-	del.className = "history-del"
-	del.title = "Delete this build"
-	del.textContent = "×"
-	del.addEventListener("click", async event => {
-		event.stopPropagation()
-		try { await deleteBuild(b.id) } catch (err) { console.warn(err) }
-		await refreshHistoryPanel()
-	})
-
-	item.append(thumbBtn, meta, del)
-	return item
-}
-
-// Restore a stored build: swap in its block-out and re-seat its scene splat from IndexedDB
-// without regenerating. Replaces the current scene (same as ZIP re-fit).
-async function restoreBuild(id) {
-	if (generating) return
-	let entry, splatBytes
-	try {
-		entry = (await listBuilds()).find(b => b.id === id)
-		splatBytes = await getBuildSceneSplat(id)
-	} catch {
-		setStatus("Couldn't load that build")
-		return
-	}
-	if (!entry || !splatBytes) { setStatus("That build is no longer available"); await refreshHistoryPanel(); return }
-	generating = true
-	splatting = true
-	syncGenerateButton()
-	setStatus("")
-	try {
-		// Accept metadata from one-shot entries saved before history was narrowed to one scene.
-		const sceneMetadata = entry.scene ?? entry.subjects?.find(item => item.name === "scene" || item.kind === "scene")
-		await applyStoredBuild({
-			primitives: entry.primitives,
-			sceneMetadata,
-			splatBytes,
-		})
-		world.prompt = entry.prompt || ""
-		if (els.chatPrompt) els.chatPrompt.value = world.prompt
-		setStatus("Restored scene from history")
-	} catch (err) {
-		setStatus(err.message || "Restore failed")
-		hideProgress()
-	} finally {
-		generating = false
-		splatting = false
-		syncGenerateButton()
-	}
-}
-
-function toggleHistoryPanel(open) {
-	historyOpen = open ?? !historyOpen
-	if (historyOpen && els.settingsPopover) toggleSettings(false) // close settings so the two panels don't overlap
-	els.historyPanel?.classList.toggle("hidden", !historyOpen)
-	els.historyToggle?.classList.toggle("active", historyOpen)
-	if (historyOpen) refreshHistoryPanel()
-}
-
 function toggleSettings(open) {
 	const next = open ?? els.settingsPopover.classList.contains("hidden")
 	els.settingsPopover.classList.toggle("hidden", !next)
@@ -7049,7 +6693,7 @@ function toggleSettings(open) {
 for (const button of els.toolButtons) button.addEventListener("click", () => setActiveTool(button.dataset.tool))
 for (const button of els.viewToolButtons) button.addEventListener("click", () => setViewTool(button.dataset.viewTool))
 for (const button of els.viewTabs) button.addEventListener("click", () => setUiTab(button.dataset.viewTab))
-els.frameAdd?.addEventListener("click", addFrameForActiveTab)
+els.frameAdd?.addEventListener("click", () => addFrameForActiveTab().catch(error => setStatus(error.message)))
 
 els.flyBtn?.addEventListener("click", enterFly)
 els.shotAdd?.addEventListener("click", addCamShot)
@@ -7197,14 +6841,7 @@ applyDevtoolsChrome()
 window.addEventListener("resize", applyDevtoolsChrome)
 window.setInterval(applyDevtoolsChrome, 1000)
 
-els.historyToggle?.addEventListener("click", () => toggleHistoryPanel())
 
-els.historyClear?.addEventListener("click", async () => {
-	try { await clearBuilds() } catch (err) { console.warn(err) }
-	await refreshHistoryPanel()
-})
-
-els.historyClose?.addEventListener("click", () => toggleHistoryPanel(false))
 
 // The chat bar has one job in whole-scene mode: splat the current Build in one shot.
 els.chatForm.addEventListener("submit", event => {
@@ -7214,9 +6851,45 @@ els.chatForm.addEventListener("submit", event => {
 	generateWorld(prompt).catch(error => setStatus(error.message || "Could not start generation"))
 })
 
-els.hfSignOut?.addEventListener("click", () => {
-	signOutHuggingFace()
-	location.assign("/")
+async function signOutAccount() {
+ try { await persistFramesNow(); await logout(); location.assign("/") }
+ catch (error) { setStatus(error.message) }
+}
+els.googleSignOut?.addEventListener("click", signOutAccount)
+document.getElementById("rename_tab_cancel").addEventListener("click", () => document.getElementById("rename_tab_dialog").close())
+document.getElementById("rename_tab_form").addEventListener("submit", event => {
+ event.preventDefault()
+ const dialog = document.getElementById("rename_tab_dialog"), name = document.getElementById("rename_tab_input").value.trim()
+ const frame = allWorkspaceFrames().find(f => f.tabId === dialog.dataset.tabId)
+ if (!frame || !name) return
+ frame.name = name; dialog.close(); renderFramesPanel()
+})
+els.chatPrompt.addEventListener("input", () => { if (uiTab === "build") { world.prompt = els.chatPrompt.value; persistFramesSoon() } })
+document.getElementById("open_renders")?.addEventListener("click", async () => {
+ const dialog = document.getElementById("renders_dialog"), list = document.getElementById("account_renders")
+ list.textContent = "Loading renders…"; dialog.showModal()
+ try {
+  const jobs = await listJobs(); list.replaceChildren()
+  if (!jobs.length) list.textContent = "No renders yet. Render a build to create your first splat."
+  for (const job of jobs) {
+   const button = document.createElement("button"); button.type = "button"; button.className = "btn btn-ghost account-render"
+   const title = document.createElement("span"); title.textContent = new Date(job.created_at).toLocaleString()
+   const detail = document.createElement("span"); detail.className = "text-xs opacity-70"; detail.textContent = job.status === "failed" ? job.error : job.status
+   button.append(title, detail)
+   button.addEventListener("click", async () => {
+    let frame = frames.view.find(f => f.jobId === job.id)
+    if (!frame) { if (allWorkspaceFrames().length >= 100) { setStatus("Close a tab before opening another render."); return }; frame = { id: ++frameSeq, tabId: crypto.randomUUID(), name: `Splat ${frames.view.length + 1}`, jobId: job.id, job, records: [] }; frames.view.push(frame) }
+    dialog.close(); await activateFrame("view", frame.id); persistFramesNow().catch(error => setStatus(error.message))
+   })
+   list.append(button)
+  }
+ } catch (error) { list.textContent = error.message }
+})
+document.getElementById("splat_refresh").addEventListener("click", () => { const frame = activeWorkspaceFrame(); if (frame?.jobId) loadSplatFrame(frame) })
+document.getElementById("splat_download").addEventListener("click", async () => {
+ const frame = activeWorkspaceFrame(); if (!frame?.jobId) return
+ try { const blob = await jobAsset(frame.jobId,"splat"); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `${frame.name}.ply`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 10000) }
+ catch (error) { setStatus(error.message) }
 })
 
 window.addEventListener("resize", () => {
@@ -7260,24 +6933,23 @@ function animate(now = performance.now()) {
 
 const runtimeConfig = await getConfig()
 applyRuntimeConfig(runtimeConfig)
-configureHuggingFace(runtimeConfig?.generation)
 
 setActiveTool("pointer")
 applyColor(activeColor)
 applyBrushScale(activeBrushScale)
 if (!(await restoreFramesState())) {
-	// Nothing saved from an earlier session — seed two random checked-in default maps.
-	try {
-		await seedDefaultBuildFrames()
-	} catch (error) {
-		console.warn("Default build seed failed:", error)
-		pushBuildFrame()
-		snapshotActiveBuildFrame()
-	}
+	// A new account starts with one editable tab.
+	pushBuildFrame()
+	snapshotActiveBuildFrame()
 }
+persistenceReady = true
+renderFramesPanel()
+await persistFramesNow().catch(error => setStatus(error.message))
+refreshPendingJobs()
+setInterval(refreshPendingJobs, 4000)
 applyUiTab()
 updateCamera()
 syncGenerateButton()
 if (world.prompt) els.chatPrompt.value = world.prompt
-refreshHistoryPanel() // populate the count badge from any builds saved in earlier sessions
+// Account render history is fetched on demand.
 requestAnimationFrame(animate)
