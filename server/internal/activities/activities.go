@@ -66,6 +66,10 @@ func (a *Activities) RenderVisual(ctx context.Context, id string) error {
 		if e != nil {
 			return e
 		}
+		depth, e := a.Assets.Read(id, "depth")
+		if e != nil {
+			return e
+		}
 		if a.FAL.Key == "" {
 			return providers.Permanent("FAL_KEY is not configured")
 		}
@@ -76,7 +80,7 @@ func (a *Activities) RenderVisual(ctx context.Context, id string) error {
 		if !claimed {
 			return fmt.Errorf("FAL submission already claimed")
 		}
-		req, e = a.FAL.Submit(ctx, j.Prompt, png)
+		req, e = a.FAL.Submit(ctx, j.Prompt, png, depth)
 		if e != nil {
 			return e
 		}

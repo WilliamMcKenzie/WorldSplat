@@ -11,20 +11,18 @@ export function createSky() {
 			horizon: { value: new THREE.Color("#fcfcfc") },
 		},
 		vertexShader: `
-			varying vec3 worldPosition;
+			varying vec4 clipPosition;
 			void main() {
-				vec4 p = modelMatrix * vec4(position, 1.0);
-				worldPosition = p.xyz;
-				gl_Position = projectionMatrix * viewMatrix * p;
+				clipPosition = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+				gl_Position = clipPosition;
 			}
 		`,
 		fragmentShader: `
 			uniform vec3 top;
 			uniform vec3 horizon;
-			varying vec3 worldPosition;
+			varying vec4 clipPosition;
 			void main() {
-				float h = normalize(worldPosition).y;
-				float t = smoothstep(-0.08, 0.85, h);
+				float t = clamp(clipPosition.y / clipPosition.w * 0.5 + 0.5, 0.0, 1.0);
 				gl_FragColor = vec4(mix(horizon, top, t), 1.0);
 			}
 		`,

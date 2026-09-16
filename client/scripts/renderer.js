@@ -242,6 +242,33 @@ root.appendChild(renderer.domElement)
 
 const sky = createSky()
 scene.add(sky)
+const floorGrid = new THREE.Mesh(new THREE.PlaneGeometry(floorSize * 4, floorSize * 4), new THREE.ShaderMaterial({
+	transparent: true,
+	depthWrite: false,
+	uniforms: { color: { value: new THREE.Color("#4a5252") }, radius: { value: floorSize * 2 } },
+	vertexShader: `
+		varying vec2 gridPosition;
+		void main() {
+			gridPosition = position.xy;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+		}
+	`,
+	fragmentShader: `
+		uniform vec3 color;
+		uniform float radius;
+		varying vec2 gridPosition;
+		void main() {
+			vec2 line = abs(fract(gridPosition - 0.5) - 0.5) / fwidth(gridPosition);
+			float alpha = (1.0 - smoothstep(0.5, 1.5, min(line.x, line.y))) * (1.0 - smoothstep(0.0, radius, length(gridPosition)));
+			gl_FragColor = vec4(color, alpha * 0.2);
+			#include <colorspace_fragment>
+		}
+	`,
+}))
+floorGrid.rotation.x = -Math.PI / 2
+floorGrid.position.y = groundTopY + 0.00001
+floorGrid.userData.isDebugHelper = true
+scene.add(floorGrid)
 const sparkRenderer = new SparkRenderer({ renderer })
 scene.add(sparkRenderer)
 scene.userData.sparkRenderer = sparkRenderer // hidden during captures so splats never leak in
@@ -455,7 +482,11 @@ function recordGroundPaintPoint(tile, point, erase) {
 			points: [],
 		}
 		;(tile.userData.paintStrokes ??= []).push(stroke)
-		active = drag.groundStroke = { tile, stroke }
+		const base = document.createElement("canvas")
+		base.width = tile.userData.paint.canvas.width
+		base.height = tile.userData.paint.canvas.height
+		base.getContext("2d").drawImage(tile.userData.paint.canvas, 0, 0)
+		active = drag.groundStroke = { tile, stroke, base }
 	}
 	const next = [Number(point.x.toFixed(4)), Number(point.z.toFixed(4))]
 	const previous = active.stroke.points.at(-1)
@@ -671,7 +702,14 @@ class World {
 		const px = uv.x * canvas.width
 		const py = (1 - uv.y) * canvas.height
 		const isSheet = Boolean(hit.object.userData.isGroundSheet || hit.object.userData.tile?.userData?.isGroundSheet)
-		if (paintTarget.userData.isGround) recordGroundPaintPoint(paintTarget, hit.point, erase)
+		if (paintTarget.userData.isGround) {
+			recordGroundPaintPoint(paintTarget, hit.point, erase)
+			ctx.clearRect(0, 0, canvas.width, canvas.height)
+			ctx.drawImage(drag.groundStroke.base, 0, 0)
+			paintGroundStroke(ctx, canvas, drag.groundStroke.stroke, GROUND_SHEET_SIZE)
+			texture.needsUpdate = true
+			return
+		}
 		const radius = brushRadiiForHit(hit, canvas, isSheet ? GROUND_SHEET_SIZE : this.size)
 		ctx.save()
 		if (hit.object.userData.type === "box" && !hit.object.userData.isGround) clipToAtlasCell(ctx, canvas, uv)
@@ -1036,9 +1074,7 @@ function applyColor(color) {
 	}
 }
 
-// The palette is user-editable (add via the picker popover, hover-x to remove) and
-// persists across sessions. Removing a swatch never touches colours already painted
-// into the world — the palette only feeds the picker UI.
+// Colours added via the picker popover persist across sessions.
 const DEFAULT_PALETTE = ["#587553", "#6abe30", "#8f563b", "#d9a066", "#847e87", "#306082", "#ac3232", "#eec39a"]
 const PALETTE_STORE_KEY = "worldsketch.palette"
 
@@ -1070,19 +1106,6 @@ function renderPalette() {
 		const dot = document.createElement("span")
 		dot.style.background = hex
 		swatch.appendChild(dot)
-		if (palette.length > 1) {
-			const del = document.createElement("span")
-			del.className = "swatch-del"
-			del.title = "Remove color"
-			del.setAttribute("role", "button")
-			del.setAttribute("aria-label", `Remove ${hex}`)
-			del.textContent = "×"
-			del.addEventListener("click", event => {
-				event.stopPropagation()
-				removePaletteColor(hex)
-			})
-			swatch.appendChild(del)
-		}
 		swatch.addEventListener("click", () => applyColor(hex))
 		els.colorGrid.insertBefore(swatch, els.addColor)
 		return swatch
@@ -1098,14 +1121,6 @@ function addPaletteColor(color) {
 		renderPalette()
 	}
 	applyColor(hex)
-}
-
-function removePaletteColor(hex) {
-	if (palette.length <= 1) return // never empty the palette
-	palette = palette.filter(c => c !== hex)
-	savePalette()
-	renderPalette()
-	if (activeColor.toLowerCase() === hex) applyColor(palette[0])
 }
 
 function applyBrushScale(scale) {
@@ -1220,6 +1235,7 @@ function setUiTab(tab) {
 
 function applyUiTab() {
 	const building = uiTab === "build"
+	floorGrid.visible = building
 	document.body.classList.toggle("tab-view", uiTab === "view") // CSS strips all UI but the tabs in View
 	document.body.classList.toggle("tab-play", uiTab === "play") // CSS strips everything but the tabs + hint in Play
 	for (const button of els.viewTabs) {
@@ -1332,8 +1348,8 @@ function alignMeshToNormal(mesh, normal) {
 // Every block remembers the block it was seated on (`support`) and which face of
 // that support it sits against (`supportAxis`, in the support's local space). The
 // support forest only drives the SCALE drag now (a growing face has to know which
-// blocks are seated on it); moving and rotating treat the whole connected cluster
-// as the object — see objectClusterOf.
+// blocks are seated on it); moving treats the whole connected cluster as the object,
+// while rotation affects only the selected block.
 
 function recordSupport(mesh, hit) {
 	const onPrim = Boolean(hit) && !hit.object.userData.isGround && !hit.object.userData.locked && world.primitives.includes(hit.object)
@@ -1342,7 +1358,7 @@ function recordSupport(mesh, hit) {
 }
 
 // All blocks transitively seated on `mesh` (its dependents), nearest first. Only the
-// scale drag uses this narrow face-seated view; everything else uses objectClusterOf.
+// scale drag uses this narrow face-seated view; moving uses objectClusterOf.
 function collectSupportSubtree(mesh) {
 	const out = []
 	const seen = new Set([mesh])
@@ -1363,7 +1379,7 @@ function collectSupportSubtree(mesh) {
 // Every OTHER block in the same connected cluster as `mesh` — "the object". Blocks
 // count as connected generally (touching or overlapping, the same computeObjects rule
 // used by scene segmentation), not just when one was placed on the other's face,
-// so grabbing or rotating any block of an object carries the whole object with it.
+// so moving any block of an object carries the whole object with it.
 function objectClusterOf(mesh) {
 	const group = computeObjects(world.primitives).find(g => g.primitives.includes(mesh))
 	return group ? group.primitives.filter(p => p !== mesh) : []
@@ -1411,7 +1427,7 @@ function updateCamera() {
 	// Raw inspection changes only the camera: the uploaded splat itself remains untouched.
 	// Its native scale can be far outside the editor's normal 4..128 orbit range.
 	const minRadius = rawSplatPreview ? 0.001 : 4
-	const maxRadius = rawSplatPreview ? 1e7 : Math.max(floorSize * 8, GROUND_SHEET_SIZE * 2)
+	const maxRadius = rawSplatPreview ? 1e7 : Math.max(floorSize * 8, GROUND_SHEET_SIZE * 2) / 5.5
 	orbit.radius = Math.max(minRadius, Math.min(maxRadius, orbit.radius))
 	camera.up.set(0, 1, 0)
 	camera.position.copy(orbit.target).add(scratch.setFromSpherical(new THREE.Spherical(orbit.radius, orbit.phi, orbit.theta)))
@@ -1834,22 +1850,8 @@ function startPrimitiveDrag(event, mesh, hit = null) {
 	}
 	drag.startAngle = pointerScreenAngle(event, drag.rollCenter)
 	if (drag.mode === "scale") setupScaleDrag(mesh, hit)
-	if (drag.mode === "roll") setupRollDrag(mesh)
 	renderer.domElement.setPointerCapture(event.pointerId)
 	renderer.domElement.classList.add("is-dragging")
-}
-
-// Capture the rotating block's pivot and the start pose of every dependent, so the
-// whole stack can turn as one rigid body and seated faces stay connected.
-function setupRollDrag(mesh) {
-	drag.roll = {
-		pivot: mesh.getWorldPosition(new THREE.Vector3()),
-		members: objectClusterOf(mesh).map(m => ({
-			mesh: m,
-			startPos: m.getWorldPosition(new THREE.Vector3()),
-			startQuat: m.quaternion.clone(),
-		})),
-	}
 }
 
 function resizeCursorFromScreenVector(x, y) {
@@ -1957,15 +1959,6 @@ function updatePrimitiveDrag(event) {
 		rollQuat.setFromAxisAngle(drag.rollAxis, delta)
 		drag.mesh.quaternion.copy(rollQuat).multiply(drag.startQuaternion)
 		drag.mesh.userData.manualRotation = true
-		// Orbit each dependent around the rotating block's centre and spin it by the same
-		// amount, so the whole stack turns rigidly and stays face-to-face.
-		for (const m of drag.roll.members) {
-			tmpWorld.copy(m.startPos).sub(drag.roll.pivot).applyQuaternion(rollQuat).add(drag.roll.pivot)
-			world.group.worldToLocal(tmpWorld)
-			m.mesh.position.copy(tmpWorld)
-			m.mesh.quaternion.copy(rollQuat).multiply(m.startQuat)
-			m.mesh.userData.manualRotation = true
-		}
 		return
 	}
 }
@@ -2037,6 +2030,8 @@ function finishGroundPaintStroke() {
 	const active = drag?.groundStroke
 	if (!active || !closeGroundStroke(active.stroke)) return
 	const surface = active.tile.userData.paint
+	surface.ctx.clearRect(0, 0, surface.canvas.width, surface.canvas.height)
+	surface.ctx.drawImage(active.base, 0, 0)
 	paintGroundStroke(surface.ctx, surface.canvas, active.stroke, GROUND_SHEET_SIZE)
 	active.tile.userData.paintVersion = (active.tile.userData.paintVersion || 0) + 1
 	active.tile.userData.paintCache = null
@@ -2585,7 +2580,7 @@ renderer.domElement.addEventListener("pointerup", event => {
 	if (drag?.pointerId === event.pointerId) {
 		if (drag.mode === "splat-lasso") finishSplatLasso(event)
 		if (drag.mode === "paint") {
-			paintAtEvent(event) // make the release position the polygon's final vertex
+			paintAtEvent(event) // include the release position when checking for an enclosed scribble
 			finishGroundPaintStroke()
 		}
 		if (drag.actionPushed && !drag.mutated) activeBuildHistory()?.undo.pop() // drag never moved — drop its checkpoint
@@ -2639,8 +2634,9 @@ function syncWorldState() {
 function allWorkspaceFrames() { return [...frames.build, ...frames.view].sort((a, b) => a.id - b.id) }
 function activeWorkspaceFrame() { return frames[uiTab === "build" ? "build" : "view"].find(f => f.id === activeFrameId[uiTab === "build" ? "build" : "view"]) }
 function renderFramesPanel() {
- const items = allWorkspaceFrames().map(f => ({ id: f.tabId, name: f.name, type: frames.build.includes(f) ? "build" : "splat", status: f.job?.status }))
+ const items = allWorkspaceFrames().map(f => ({ id: f.tabId, name: f.name, type: frames.build.includes(f) ? "build" : "splat", status: f.job?.status, dirty: persistenceReady && tabSync.isTabDirty(serializeTab(f)) }))
  renderWorkspaceTabs(document.getElementById("workspace_tabs"), items, activeWorkspaceFrame()?.tabId, {
+  add: () => addFrameForActiveTab().catch(error => setStatus(error.message)),
   select: id => { const f = allWorkspaceFrames().find(f => f.tabId === id); if (f) activateFrame(frames.build.includes(f) ? "build" : "view", f.id).catch(error => setStatus(error.message)) },
   close: id => { const f = allWorkspaceFrames().find(f => f.tabId === id); if (f) deleteFrame(frames.build.includes(f) ? "build" : "view", f.id).catch(error => setStatus(error.message)) },
   rename: id => {
@@ -2708,7 +2704,7 @@ function beginBuildAction() {
 	h.undo.push(snapshotBuildWorld())
 	if (h.undo.length > 30) h.undo.shift()
 	h.redo.length = 0
-	persistFramesSoon() // the debounced save runs after the mutation this checkpoints
+	persistFramesSoon() // update the unsaved indicator after the mutation
 }
 
 async function undoBuild() {
@@ -2825,6 +2821,7 @@ async function activateFrame(tab, id) {
  switchingFrame = true
  try {
   snapshotActiveBuildFrame()
+  const wasSaved = !tabSync.isTabDirty(serializeTab(frame))
   const previous = activeWorkspaceFrame()
   if (previous) previous.camera = { target: orbit.target.clone(), radius: orbit.radius, theta: orbit.theta, phi: orbit.phi }
   clearRawSplatPreview()
@@ -2834,6 +2831,8 @@ async function activateFrame(tab, id) {
   if (tab === "build") {
    uiTab = "build"
    await applyBuildSnapshot(frame.snapshot ?? emptyBuildSnapshot())
+   snapshotActiveBuildFrame()
+   if (wasSaved) tabSync.normalizeSavedTab(serializeTab(frame))
   } else {
    uiTab = "view"
    world.generated = frame.records
@@ -2850,7 +2849,7 @@ async function activateFrame(tab, id) {
 let switchingFrame = false
 
 async function deleteFrame(tab, id) {
- if (generating || switchingFrame) return
+ if (generating || switchingFrame || allWorkspaceFrames().length <= 1) return
  const list = frames[tab]
  const index = list.findIndex(f => f.id === id)
  if (index < 0) return
@@ -2867,7 +2866,6 @@ async function deleteFrame(tab, id) {
   else { uiTab = "build"; await applyBuildSnapshot(emptyBuildSnapshot()); pushBuildFrame(); snapshotActiveBuildFrame() }
  }
  renderFramesPanel()
- await persistFramesNow()
 }
 async function addFrameForActiveTab() {
  if (generating || switchingFrame || allWorkspaceFrames().length >= 100) return
@@ -2875,52 +2873,62 @@ async function addFrameForActiveTab() {
  const frame = { id: ++frameSeq, tabId: crypto.randomUUID(), name: frameLabel("build", frames.build.length + 1), snapshot: emptyBuildSnapshot() }
  frames.build.push(frame)
  await activateFrame("build", frame.id)
- await persistFramesNow()
 }
 
 // Account tabs are saved in PostgreSQL. No build, job or account data is restored from another user's browser cache.
 let applyingBuildSnapshot = 0
 let persistTimer = 0
 let persistenceReady = false
-let lastQueuedTabs = ""
 let wipingAccountData = false
 let workspaceSaveError = ""
 const workspaceBearer = sessionToken()
 const tabSync = createTabSync(tabs => saveTabs(tabs, workspaceBearer), (state, error) => {
  if (state === "error") {
-  workspaceSaveError = error?.message || "Your changes could not be saved. They will retry when your connection returns."
+  workspaceSaveError = error?.message || "Your changes could not be saved. Press Ctrl+S or Cmd+S to retry."
   setStatus(workspaceSaveError)
  } else if (state === "saved" && workspaceSaveError) {
   if (els.status.textContent === workspaceSaveError) setStatus("")
   workspaceSaveError = ""
  }
-})
+ if (persistenceReady) syncUnsavedTabs()
+}, getAccount()?.tabs ?? [])
+function serializeTab(frame) {
+ return frames.build.includes(frame)
+  ? { id: frame.tabId, type: "build", name: frame.name, snapshot: frame.snapshot ?? emptyBuildSnapshot() }
+  : { id: frame.tabId, type: "splat", name: frame.name, job_id: frame.jobId }
+}
 function serializeTabs() {
  if (!applyingBuildSnapshot && !buildHistoryBusy) snapshotActiveBuildFrame()
- return allWorkspaceFrames().filter(f => frames.build.includes(f) || f.jobId).map(f => frames.build.includes(f)
-  ? { id: f.tabId, type: "build", name: f.name, snapshot: f.snapshot ?? emptyBuildSnapshot() }
-  : { id: f.tabId, type: "splat", name: f.name, job_id: f.jobId })
+ return allWorkspaceFrames().filter(f => frames.build.includes(f) || f.jobId).map(serializeTab)
+}
+function syncUnsavedTabs() {
+ if (!persistenceReady || applyingBuildSnapshot || buildHistoryBusy) return
+ const tabs = serializeTabs()
+ for (const button of document.querySelectorAll("#workspace_tabs [data-tab-id]")) {
+  const tab = tabs.find(item => item.id === button.dataset.tabId)
+  const dirty = !tab || tabSync.isTabDirty(tab)
+  const selected = button.getAttribute("aria-selected") === "true"
+  button.querySelector(".tab-unsaved")?.classList.toggle("hidden", !dirty || !selected)
+  button.querySelector(".tab-close")?.classList.toggle("hidden", dirty || !selected || allWorkspaceFrames().length <= 1)
+  button.setAttribute("aria-label", button.getAttribute("aria-label").replace(/, unsaved changes$/, "") + (dirty ? ", unsaved changes" : ""))
+ }
 }
 function persistFramesSoon() {
  if (!persistenceReady || wipingAccountData || applyingBuildSnapshot) return
  clearTimeout(persistTimer)
- // Queue the snapshot immediately so beforeunload can detect unsaved changes during debounce.
- const tabs = serializeTabs(), encoded = JSON.stringify(tabs)
- if (encoded !== lastQueuedTabs) { tabSync.queue(tabs); lastQueuedTabs = encoded }
- persistTimer = setTimeout(() => persistFramesNow().catch(() => {}), 800)
+ // Check after the current edit finishes; edits are saved only on explicit save.
+ persistTimer = setTimeout(syncUnsavedTabs, 0)
 }
-async function persistFramesNow() {
+async function persistFramesNow(tabId = activeWorkspaceFrame()?.tabId) {
  clearTimeout(persistTimer)
- if (!persistenceReady || wipingAccountData || applyingBuildSnapshot) return
- const tabs = serializeTabs(), encoded = JSON.stringify(tabs)
- if (encoded !== lastQueuedTabs) { tabSync.queue(tabs); lastQueuedTabs = encoded }
+ if (!persistenceReady || wipingAccountData || applyingBuildSnapshot || !tabId) return
+ tabSync.queueTab(serializeTabs(), tabId)
  await tabSync.flush()
 }
 async function simulateNewAccount() { setStatus("Your workspace belongs to your Google account. Use the + button to start a new build.") }
-addEventListener("beforeunload", event => { if (tabSync.dirty) { event.preventDefault(); event.returnValue = "" } })
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") persistFramesNow().catch(() => {}) })
-addEventListener("online", () => persistFramesNow().catch(() => {}))
+addEventListener("beforeunload", event => { if (persistenceReady && (tabSync.dirty || tabSync.hasChanges(serializeTabs()))) { event.preventDefault(); event.returnValue = "" } })
 async function restoreFramesState() {
+ if (!getAccount()) return false
  const saved = getAccount()?.tabs
  if (!Array.isArray(saved)) throw new Error("Your saved workspace could not be read.")
  for (const t of saved) {
@@ -3013,9 +3021,8 @@ function yieldForProgressPaint() {
 function syncGenerateButton() {
 	els.generate.disabled = generating
 	els.generate.classList.toggle("is-disabled", generating)
-	const signedIn = Boolean(getAccount())
-	els.generate.title = generating ? "Generating…" : signedIn ? "Render this build" : "Sign in with Google to render"
-	els.generate.setAttribute("aria-label", signedIn ? "Generate world" : "Sign in with Google and render")
+	els.generate.title = generating ? "Generating…" : "Render this build"
+	els.generate.setAttribute("aria-label", "Generate world")
 	// Make the frozen state visible: not-allowed cursor over both canvases, and no
 	// placement affordance left glowing.
 	document.body.classList.toggle("is-generating", generating)
@@ -6138,7 +6145,6 @@ function segmentSceneSplat(hasGround = true) {
 // Whole-scene generation: one capture, one image edit, one TripoSplat call.
 async function generateWorld(prompt) {
  if (generating || uiTab !== "build") return
- if (!getAccount()) { location.assign("/"); return }
  const hasGround = Boolean(world.groundInkBounds())
  if (!hasGround && !world.primitives.length) { setStatus("Add a block or draw some ground first."); return }
  if (allWorkspaceFrames().length >= 100) { setStatus("Close a tab before creating another render."); return }
@@ -6146,9 +6152,8 @@ async function generateWorld(prompt) {
  const build = frames.build.find(f => f.id === activeFrameId.build)
  world.prompt = prompt
  snapshotActiveBuildFrame()
- showProgress(0, 1, "Saving your build…")
+ showProgress(0, 1, "Preparing your build…")
  try {
-  await persistFramesNow()
   const capture = await captureWorldQuiet(renderer, scene, world, wholeSceneBox(), computeObjects(world.primitives), { theta: FRONT_THETA, phi: FRONT_PHI })
   const inputHash = JSON.stringify(build.snapshot)
   // A lost HTTP response retries the same provider job when the unchanged build is rendered again.
@@ -6158,9 +6163,7 @@ async function generateWorld(prompt) {
   delete build.pendingRender
   let frame = frames.view.find(f => f.jobId === job.id)
   if (!frame) { frame = { id: ++frameSeq, tabId: crypto.randomUUID(), name: `${build.name.slice(0, 40)} · Splat`, jobId: job.id, job, records: [] }; frames.view.push(frame) }
-  // Persist the job reference before switching views; it survives browser closure while Temporal works.
   renderFramesPanel()
-  await persistFramesNow()
   generating = false
   await activateFrame("view", frame.id)
  } catch (error) { setStatus(error.message || "Could not render this build.") }
@@ -6793,6 +6796,12 @@ document.addEventListener("keydown", event => {
 	// Ctrl/Cmd+Z undoes, Ctrl+Y (or Ctrl/Cmd+Shift+Z) redoes the active Build frame.
 	// Text inputs keep their native undo; View has nothing to undo.
 	const key = event.key.toLowerCase()
+	if ((event.ctrlKey || event.metaKey) && !event.altKey && key === "s") {
+		event.preventDefault()
+		if (event.repeat || generating || drag || switchingFrame || buildHistoryBusy) return
+		persistFramesNow().catch(error => setStatus(error.message || "Could not save this tab."))
+		return
+	}
 	if ((event.ctrlKey || event.metaKey) && (key === "z" || key === "y")) {
 		if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return
 		event.preventDefault()
@@ -6852,7 +6861,7 @@ els.chatForm.addEventListener("submit", event => {
 })
 
 async function signOutAccount() {
- try { await persistFramesNow(); await logout(); location.assign("/") }
+ try { await logout(); location.assign("/") }
  catch (error) { setStatus(error.message) }
 }
 els.googleSignOut?.addEventListener("click", signOutAccount)
@@ -6879,7 +6888,7 @@ document.getElementById("open_renders")?.addEventListener("click", async () => {
    button.addEventListener("click", async () => {
     let frame = frames.view.find(f => f.jobId === job.id)
     if (!frame) { if (allWorkspaceFrames().length >= 100) { setStatus("Close a tab before opening another render."); return }; frame = { id: ++frameSeq, tabId: crypto.randomUUID(), name: `Splat ${frames.view.length + 1}`, jobId: job.id, job, records: [] }; frames.view.push(frame) }
-    dialog.close(); await activateFrame("view", frame.id); persistFramesNow().catch(error => setStatus(error.message))
+    dialog.close(); await activateFrame("view", frame.id)
    })
    list.append(button)
   }
@@ -6944,7 +6953,6 @@ if (!(await restoreFramesState())) {
 }
 persistenceReady = true
 renderFramesPanel()
-await persistFramesNow().catch(error => setStatus(error.message))
 refreshPendingJobs()
 setInterval(refreshPendingJobs, 4000)
 applyUiTab()

@@ -803,50 +803,6 @@ body.cutscene .ui * {
 	height: 1.05rem;
 }
 
-/* Active colour reads as a ring around the dot — the standard palette affordance. */
-.side-rail .color-swatch.active {
-	background: transparent !important;
-}
-
-.side-rail .color-swatch.active span {
-	box-shadow: inset 0 0 0 1px rgba(20, 20, 15, 0.08), 0 0 0 2px #fff, 0 0 0 3.5px var(--accent);
-}
-
-/* Hovering a swatch reveals its remove badge (Canva-style palette editing). */
-.side-rail .color-swatch {
-	position: relative;
-	overflow: visible;
-}
-
-.swatch-del {
-	position: absolute;
-	top: -0.2rem;
-	right: -0.2rem;
-	width: 0.9rem;
-	height: 0.9rem;
-	display: none;
-	place-items: center;
-	border-radius: 50%;
-	background: #fff;
-	border: 1px solid var(--line);
-	color: var(--ink-faint);
-	font-size: 0.72rem;
-	line-height: 1;
-	cursor: pointer;
-	box-shadow: 0 1px 3px rgba(20, 20, 15, 0.2);
-	z-index: 1;
-}
-
-.color-swatch:hover .swatch-del {
-	display: grid;
-}
-
-.swatch-del:hover {
-	background: #fde8e8;
-	border-color: #f0b9b9;
-	color: #d64545;
-}
-
 /* Custom colour picker popover: SV square + hue strip + hex field, anchored beside
    the palette — replaces the OS colour dialog that opened in the screen corner. */
 .color-pop {
@@ -970,49 +926,6 @@ body.cutscene .ui * {
 	border-radius: 50%;
 	background: var(--accent);
 	box-shadow: inset 0 0 0 1px rgba(20, 20, 15, 0.08);
-}
-
-.brush-slider input[type="range"] {
-	flex: 1;
-	min-width: 0;
-	margin: 0;
-	appearance: none;
-	-webkit-appearance: none;
-	height: 1rem;
-	background: transparent;
-	cursor: pointer;
-}
-
-.brush-slider input[type="range"]::-webkit-slider-runnable-track {
-	height: 0.2rem;
-	border-radius: 999px;
-	background: var(--line);
-}
-
-.brush-slider input[type="range"]::-webkit-slider-thumb {
-	-webkit-appearance: none;
-	width: 0.8rem;
-	height: 0.8rem;
-	margin-top: -0.3rem;
-	border-radius: 50%;
-	background: var(--accent);
-	border: 2px solid #fff;
-	box-shadow: 0 0 0 1px rgba(20, 20, 15, 0.12);
-}
-
-.brush-slider input[type="range"]::-moz-range-track {
-	height: 0.2rem;
-	border-radius: 999px;
-	background: var(--line);
-}
-
-.brush-slider input[type="range"]::-moz-range-thumb {
-	width: 0.8rem;
-	height: 0.8rem;
-	border-radius: 50%;
-	background: var(--accent);
-	border: 2px solid #fff;
-	box-shadow: 0 0 0 1px rgba(20, 20, 15, 0.12);
 }
 
 body.tab-view .side-rail {
@@ -1445,7 +1358,7 @@ body.dev-controls-visible .tuning-panel {
 	color: var(--ink-faint);
 }
 
-input {
+input:where(:not(.range, .input)) {
 	box-sizing: border-box;
 	width: 100%;
 	min-width: 0;
@@ -2068,22 +1981,22 @@ body.hide-ui > :not(#canvas) {
 }
 
 /* Keep the header limited to native daisyUI boxed tabs. */
-.workspace-header { position: fixed; top: 10px; left: 16px; right: 16px; z-index: 20; pointer-events: none; }
-#workspace_tabs { width: fit-content; max-width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; pointer-events: auto; background: transparent; box-shadow: none; }
-#workspace_tabs > .tab { flex-shrink: 0; white-space: nowrap; }
+.workspace-header { position: absolute; padding: 0.5rem 0.5rem 0; top: 0; left: 0; right: 0; z-index: 20; pointer-events: none; background: var(--color-base-100, #fff); }
+#workspace_tabs { width: 100%; max-width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; pointer-events: auto; background: transparent; box-shadow: none; }
+#workspace_tabs > .tab { flex-shrink: 0; white-space: nowrap; gap: 0.4rem; }
+#workspace_tabs > .tab svg { flex-shrink: 0; }
+#workspace_tabs .tab-unsaved { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+#workspace_tabs .tab-close { display: inline-flex; align-items: center; justify-content: center; width: 1rem; height: 1rem; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; }
+#workspace_tabs .tab-close.hidden { display: none; }
 .splat-info { position: fixed; top: 85px; left: 18px; max-width: min(320px, calc(100vw - 36px)); pointer-events: auto; z-index: 10; }
 .splat-info .card-body { padding: 16px; gap: 12px; font-size: 13px; }
 .splat-actions { display: flex; gap: 8px; }
-.workspace-startup { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: var(--paper); z-index: 100; padding: 30px; text-align: center; }
-.workspace-header ~ .settings-menu { top: 85px; }
+.workspace-header ~ .ui .settings-menu { top: 85px; }
 .frames-panel, body.devtools-open .frames-panel, .view-tabs, .view-dock { display: none !important; }
 body.tab-view .side-rail, body.tab-view .settings-menu, body.tab-view .view-transform-overlay { display: none !important; }
 body.tab-view #canvas canvas { cursor: grab !important; }
 #rename_tab_dialog { pointer-events: auto; }
 .status-toast { top: 82px; z-index: 30; }
-@media (max-width: 720px) {
- .workspace-header { top: 8px; left: 8px; right: 8px; }
-}
 
 .account-renders { display: grid; gap: 8px; margin-top: 18px; max-height: 55vh; overflow: auto; }
 .account-render { text-align: left; display: flex; flex-direction: column; align-items: flex-start; height: auto; white-space: normal; padding: 12px; }

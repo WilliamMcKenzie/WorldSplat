@@ -25,7 +25,7 @@ func env(k, fallback string) string {
 	return fallback
 }
 func Load() (Config, error) {
-	c := Config{Addr: env("WS_ADDR", ":"+env("PORT", "8067")), DatabaseURL: os.Getenv("DATABASE_URL"), RedisURL: env("REDIS_URL", "redis://127.0.0.1:6379/0"), GoogleClientID: os.Getenv("WS_GOOGLE_CLIENT_ID"), DataDir: env("WS_DATA_DIR", "./output"), ClientDir: env("WS_CLIENT_DIR", "../client"), TemporalAddress: env("TEMPORAL_ADDRESS", "127.0.0.1:7233"), TemporalNamespace: env("TEMPORAL_NAMESPACE", "worldsplat"), TaskQueue: env("TEMPORAL_TASK_QUEUE", "worldsplat-render"), FALKey: os.Getenv("FAL_KEY"), FALURL: env("WS_FAL_URL", "https://queue.fal.run"), FALModel: env("WS_FAL_MODEL", "fal-ai/flux-2/klein/4b/edit"), TripoURL: env("WS_TRIPO_URL", "http://127.0.0.1:7860")}
+	c := Config{Addr: env("WS_ADDR", ":"+env("PORT", "8067")), DatabaseURL: os.Getenv("DATABASE_URL"), RedisURL: env("REDIS_URL", "redis://127.0.0.1:6379/0"), GoogleClientID: os.Getenv("WS_GOOGLE_CLIENT_ID"), DataDir: env("WS_DATA_DIR", "./output"), ClientDir: env("WS_CLIENT_DIR", "../client"), TemporalAddress: env("TEMPORAL_ADDRESS", "127.0.0.1:7233"), TemporalNamespace: env("TEMPORAL_NAMESPACE", "worldsplat"), TaskQueue: env("TEMPORAL_TASK_QUEUE", "worldsplat-render"), FALKey: os.Getenv("FAL_KEY"), FALURL: env("WS_FAL_URL", "https://queue.fal.run"), FALModel: env("WS_FAL_MODEL", "fal-ai/flux-control-lora-depth"), TripoURL: env("WS_TRIPO_URL", "http://127.0.0.1:7860")}
 	if c.DatabaseURL == "" {
 		return c, fmt.Errorf("DATABASE_URL is required")
 	}

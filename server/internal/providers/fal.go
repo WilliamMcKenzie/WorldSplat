@@ -18,12 +18,20 @@ type FALRequest struct {
 	ResponseURL string `json:"response_url"`
 }
 
-func (f FAL) Submit(ctx context.Context, prompt string, png []byte) (FALRequest, error) {
+func (f FAL) Submit(ctx context.Context, prompt string, png, depth []byte) (FALRequest, error) {
 	var out FALRequest
 	if f.Key == "" {
 		return out, Permanent("FAL_KEY is not configured")
 	}
-	input := map[string]any{"prompt": prompt, "image_urls": []string{"data:image/png;base64," + base64.StdEncoding.EncodeToString(png)}, "num_images": 1, "output_format": "png", "enable_safety_checker": true}
+	input := map[string]any{
+		"prompt":                 prompt,
+		"image_url":              "data:image/png;base64," + base64.StdEncoding.EncodeToString(png),
+		"control_lora_image_url": "data:image/png;base64," + base64.StdEncoding.EncodeToString(depth),
+		"preprocess_depth":       false,
+		"control_lora_strength":  1,
+		"image_size":             "square_hd",
+		"num_images":             1, "output_format": "png", "enable_safety_checker": true,
+	}
 	e := requestJSON(ctx, f.Client, "POST", strings.TrimRight(f.BaseURL, "/")+"/"+f.Model, f.Key, input, &out)
 	if e != nil {
 		return out, e

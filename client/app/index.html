@@ -36,7 +36,6 @@
 </head>
 <body>
 	<div id="canvas" role="tabpanel" aria-label="Active workspace tab"></div>
-    <div id="editor_startup" class="workspace-startup"><span class="loading loading-spinner loading-lg"></span><p>Opening your workspace…</p><button class="btn hidden" onclick="location.reload()">Try again</button></div>
     <dialog id="renders_dialog" class="modal"><div class="modal-box"><h2 class="text-lg font-semibold">Your renders</h2><p class="text-sm opacity-70">Reopen a result or check an ongoing render.</p><div id="account_renders" class="account-renders"></div><form method="dialog" class="modal-action"><button class="btn">Close</button></form></div></dialog>
     <dialog id="rename_tab_dialog" class="modal"><form method="dialog" class="modal-box" id="rename_tab_form"><h2 class="text-lg font-semibold">Rename tab</h2><label class="form-control"><span class="label">Name</span><input id="rename_tab_input" class="input input-bordered w-full" maxlength="50" required></label><div class="modal-action"><button type="button" class="btn btn-ghost" id="rename_tab_cancel">Cancel</button><button class="btn btn-neutral" type="submit">Save name</button></div></form></dialog>
 	<svg class="view-transform-overlay hidden" id="view_transform_overlay" aria-hidden="true">
@@ -52,15 +51,15 @@
 			<rect class="view-scale-handle" data-view-scale-handle="sw" width="12" height="12" rx="2"></rect>
 		</g>
 	</svg>
+	<header class="workspace-header">
+		<div class="tabs tabs-lift" id="workspace_tabs" role="tablist" aria-label="Workspace tabs"></div>
+	</header>
 	<div class="ui">
 		<div class="view-tabs hidden" role="tablist" aria-label="Build or view the world">
 			<button class="view-tab active" data-view-tab="build" role="tab" aria-selected="true" title="Edit the block-out (splats hidden)">Build</button>
 			<button class="view-tab" data-view-tab="view" role="tab" aria-selected="false" disabled title="See and arrange the generated world">View</button>
 			<button class="view-tab" data-view-tab="play" role="tab" aria-selected="false" disabled title="Walk the generated world third-person">Play</button>
 		</div>
-        <header class="workspace-header">
-            <div class="tabs tabs-box" id="workspace_tabs" role="tablist" aria-label="Workspace tabs"></div>
-        </header>
         <section id="splat_info" class="splat-info card bg-base-100 shadow-sm hidden" aria-live="polite"><div class="card-body"><span class="badge badge-outline">View-only splat</span><p id="splat_state"></p><div class="splat-actions"><button id="splat_download" class="btn btn-neutral btn-sm hidden" type="button">Download PLY</button><button id="splat_refresh" class="btn btn-ghost btn-sm" type="button">Refresh</button></div></div></section>
 		<div class="side-rail bg-base-100 shadow-xl border border-base-300" role="toolbar" aria-label="Tools, colors and brush">
 			<nav class="rail-tools" aria-label="Primitive tools">
@@ -79,7 +78,7 @@
 				<button class="tool-btn btn btn-ghost btn-square" data-tool="eraser" aria-label="Eraser" title="Eraser (blocks and drawn ground)">
 					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 20h-10.5l-4.21 -4.3a1 1 0 0 1 0 -1.41l10 -10a1 1 0 0 1 1.41 0l5 5a1 1 0 0 1 0 1.41l-9.2 9.3"></path><path d="M18 13.3l-6.3 -6.3"></path></svg>
 				</button>
-				<button class="tool-btn btn btn-ghost btn-square" data-tool="paint" aria-label="Draw floor" title="Draw floor — drag an outline, then release to close and fill it">
+				<button class="tool-btn btn btn-ghost btn-square" data-tool="paint" aria-label="Draw floor" title="Draw floor — close a loop, then scribble inside without lifting to fill">
 					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"></path><path d="M13.5 6.5l4 4"></path></svg>
 					<span class="tool-color-dot" id="pen_color_dot" aria-hidden="true"></span>
 				</button>
@@ -109,7 +108,7 @@
 			<span class="rail-divider" aria-hidden="true"></span>
 			<div class="brush-slider rail-brushes" id="brush_palette" aria-label="Brush size">
 				<span class="brush-size-dot" id="brush_size_dot" aria-hidden="true"></span>
-				<input type="range" id="brush_size_slider" min="0.5" max="1.75" step="0.05" value="1" aria-label="Brush size" title="Brush size">
+				<input type="range" class="range range-xs range-primary flex-1 min-w-0" id="brush_size_slider" min="0.5" max="1.75" step="0.05" value="1" aria-label="Brush size" title="Brush size">
 			</div>
 			</div>
 		</div>
@@ -183,7 +182,7 @@
 					</div>
 				</div>
 				<form class="chat-bar" id="chat_form">
-					<input class="chat-input" id="chat_prompt" maxlength="1000" type="text" autocomplete="off" placeholder="Describe your scene...">
+					<input class="input input-ghost chat-input" id="chat_prompt" maxlength="1000" type="text" autocomplete="off" placeholder="Describe your scene...">
 					<button class="chat-send btn btn-square" id="generate_btn" type="submit" aria-label="Generate world" title="Generate">
 						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6v6a3 3 0 0 1 -3 3h-10"></path><path d="M9 18l-3 -3l3 -3"></path></svg>
 					</button>
