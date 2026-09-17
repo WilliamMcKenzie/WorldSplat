@@ -19,17 +19,18 @@ func TestFALQueue(t *testing.T) {
 			t.Error("missing auth")
 		}
 		switch r.URL.Path {
-		case "/model/edit":
+		case "/openai/gpt-image-2.5/sunburst/edit":
 			var in map[string]any
 			json.NewDecoder(r.Body).Decode(&in)
 			if in["num_images"] != float64(1) || in["output_format"] != "png" {
 				t.Error("invalid input", in)
 			}
-			if in["image_url"] != "data:image/png;base64,UE5H" || in["control_lora_image_url"] != "data:image/png;base64,REVQVEg=" || in["preprocess_depth"] != false || in["control_lora_strength"] != float64(1) || in["image_size"] != "square_hd" {
-				t.Error("invalid depth conditioning", in)
+			images, ok := in["image_urls"].([]any)
+			if !ok || len(images) != 1 || images[0] != "data:image/png;base64,UE5H" || in["quality"] != "medium" || in["image_size"] != "square_hd" || in["prompt"] != "garden" {
+				t.Error("invalid Sunburst input", in)
 			}
-			if _, exists := in["image_urls"]; exists {
-				t.Error("obsolete Klein input sent")
+			if len(in) != 6 {
+				t.Error("unexpected fields sent to Sunburst", in)
 			}
 			json.NewEncoder(w).Encode(FALRequest{"req", srv.URL + "/status", srv.URL + "/result"})
 		case "/status":
@@ -46,8 +47,8 @@ func TestFALQueue(t *testing.T) {
 		}
 	}))
 	defer srv.Close()
-	f := FAL{srv.Client(), srv.URL, "model/edit", "test-key"}
-	req, e := f.Submit(context.Background(), "garden", []byte("PNG"), []byte("DEPTH"))
+	f := FAL{srv.Client(), srv.URL, "openai/gpt-image-2.5/sunburst/edit", "test-key"}
+	req, e := f.Submit(context.Background(), "garden", []byte("PNG"))
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -67,7 +68,7 @@ func TestProviderErrorsAndOrigins(t *testing.T) {
 	}))
 	defer s.Close()
 	f := FAL{s.Client(), s.URL, "model", "key"}
-	_, e := f.Submit(context.Background(), "test", nil, nil)
+	_, e := f.Submit(context.Background(), "test", nil)
 	var app *temporal.ApplicationError
 	if !errors.As(e, &app) || !app.NonRetryable() || !strings.Contains(e.Error(), "credits") || strings.Contains(e.Error(), "secret") {
 		t.Fatal(e)

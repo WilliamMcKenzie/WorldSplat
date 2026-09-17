@@ -1983,20 +1983,22 @@ body.hide-ui > :not(#canvas) {
 /* Keep the header limited to native daisyUI boxed tabs. */
 .workspace-header { position: absolute; padding: 0.5rem 0.5rem 0; top: 0; left: 0; right: 0; z-index: 20; pointer-events: none; background: var(--color-base-100, #fff); }
 #workspace_tabs { width: 100%; max-width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; pointer-events: auto; background: transparent; box-shadow: none; }
-#workspace_tabs > .tab { flex-shrink: 0; white-space: nowrap; gap: 0.4rem; }
+#workspace_tabs > .tab { flex-shrink: 0; flex-wrap: nowrap; white-space: nowrap; gap: 0.4rem; }
+#workspace_tabs > .tab:focus-visible { outline: 1px solid #0002; outline-offset: -1px; }
 #workspace_tabs > .tab svg { flex-shrink: 0; }
+#workspace_tabs .tab-name-input { field-sizing: content; width: auto; max-width: 40ch; padding: 0; border: 0; outline: none; border-radius: 0; background: transparent; color: inherit; font: inherit; line-height: inherit; }
 #workspace_tabs .tab-unsaved { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 #workspace_tabs .tab-close { display: inline-flex; align-items: center; justify-content: center; width: 1rem; height: 1rem; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; }
 #workspace_tabs .tab-close.hidden { display: none; }
-.splat-info { position: fixed; top: 85px; left: 18px; max-width: min(320px, calc(100vw - 36px)); pointer-events: auto; z-index: 10; }
-.splat-info .card-body { padding: 16px; gap: 12px; font-size: 13px; }
-.splat-actions { display: flex; gap: 8px; }
 .workspace-header ~ .ui .settings-menu { top: 85px; }
 .frames-panel, body.devtools-open .frames-panel, .view-tabs, .view-dock { display: none !important; }
 body.tab-view .side-rail, body.tab-view .settings-menu, body.tab-view .view-transform-overlay { display: none !important; }
 body.tab-view #canvas canvas { cursor: grab !important; }
-#rename_tab_dialog { pointer-events: auto; }
 .status-toast { top: 82px; z-index: 30; }
 
 .account-renders { display: grid; gap: 8px; margin-top: 18px; max-height: 55vh; overflow: auto; }
 .account-render { text-align: left; display: flex; flex-direction: column; align-items: flex-start; height: auto; white-space: normal; padding: 12px; }
+
+#workspace_tabs > .tab[aria-disabled="true"] { cursor: default; }
+#workspace_tabs .tab-spinner { animation: tab-spin 1s linear infinite; }
+@keyframes tab-spin { to { transform: rotate(360deg); } }

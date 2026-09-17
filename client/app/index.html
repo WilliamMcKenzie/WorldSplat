@@ -11,7 +11,7 @@
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=Newsreader:opsz,wght@6..72,400..600&display=swap" rel="stylesheet">
 	<link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css">
 	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-	<link rel="stylesheet" href="/styles.css?v=google-tabs-1">
+	<link rel="stylesheet" href="/styles.css?v=loading-tabs-3">
 	<script type="importmap">
 	{
 		"imports": {
@@ -37,7 +37,6 @@
 <body>
 	<div id="canvas" role="tabpanel" aria-label="Active workspace tab"></div>
     <dialog id="renders_dialog" class="modal"><div class="modal-box"><h2 class="text-lg font-semibold">Your renders</h2><p class="text-sm opacity-70">Reopen a result or check an ongoing render.</p><div id="account_renders" class="account-renders"></div><form method="dialog" class="modal-action"><button class="btn">Close</button></form></div></dialog>
-    <dialog id="rename_tab_dialog" class="modal"><form method="dialog" class="modal-box" id="rename_tab_form"><h2 class="text-lg font-semibold">Rename tab</h2><label class="form-control"><span class="label">Name</span><input id="rename_tab_input" class="input input-bordered w-full" maxlength="50" required></label><div class="modal-action"><button type="button" class="btn btn-ghost" id="rename_tab_cancel">Cancel</button><button class="btn btn-neutral" type="submit">Save name</button></div></form></dialog>
 	<svg class="view-transform-overlay hidden" id="view_transform_overlay" aria-hidden="true">
 		<path class="view-lasso-path hidden" id="view_lasso_path"></path>
 		<g class="view-selection-frame hidden" id="view_selection_frame">
@@ -60,7 +59,6 @@
 			<button class="view-tab" data-view-tab="view" role="tab" aria-selected="false" disabled title="See and arrange the generated world">View</button>
 			<button class="view-tab" data-view-tab="play" role="tab" aria-selected="false" disabled title="Walk the generated world third-person">Play</button>
 		</div>
-        <section id="splat_info" class="splat-info card bg-base-100 shadow-sm hidden" aria-live="polite"><div class="card-body"><span class="badge badge-outline">View-only splat</span><p id="splat_state"></p><div class="splat-actions"><button id="splat_download" class="btn btn-neutral btn-sm hidden" type="button">Download PLY</button><button id="splat_refresh" class="btn btn-ghost btn-sm" type="button">Refresh</button></div></div></section>
 		<div class="side-rail bg-base-100 shadow-xl border border-base-300" role="toolbar" aria-label="Tools, colors and brush">
 			<nav class="rail-tools" aria-label="Primitive tools">
 				<button class="tool-btn btn btn-ghost btn-square active" data-tool="pointer" aria-label="Pointer" title="Pointer">
@@ -217,6 +215,6 @@
 		<div class="fly-hint hidden" id="play_hint">WASD move &middot; Space jump &middot; Shift sprint &middot; drag look &middot; scroll zoom &middot; Esc exit</div>
 		<p class="status-toast hidden" id="status" role="alert" title="Dismiss"></p>
 	</div>
-	<script type="module" src="/scripts/editor-entry.js?v=google-tabs-1"></script>
+	<script type="module" src="/scripts/editor-entry.js?v=canvas-examples-1"></script>
 </body>
 </html>

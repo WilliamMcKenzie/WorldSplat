@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { DEFAULT_SEED_COUNT, loadDefaultBuildSeeds } from "../scripts/default-builds.js"
+import { loadDefaultBuildSeeds } from "../scripts/default-builds.js"
 
 const manifest = {
 	maps: [
@@ -35,24 +35,14 @@ function fixturesWithAllMaps() {
 	return fixtures
 }
 
-test("seeds two distinct random maps named Example 1 and Example 2", async () => {
+test("seeds every bundled scene as a numbered example with its scene prompt", async () => {
 	const requested = []
 	const seeds = await loadDefaultBuildSeeds(fetcherFor(fixturesWithAllMaps(), requested))
-	assert.equal(seeds.length, DEFAULT_SEED_COUNT)
-	assert.deepEqual(seeds.map(seed => seed.name), ["Example 1", "Example 2"])
+	assert.equal(seeds.length, manifest.maps.length)
+	assert.deepEqual(seeds.map(seed => seed.name), ["Example 1", "Example 2", "Example 3", "Example 4"])
+	assert.deepEqual(seeds.map(seed => seed.prompt), ["Desert Sun Market", "Frostwatch Observatory", "Drowned Temple Ruins", "Skyforge Courtyard"])
 	const mapFiles = requested.filter(url => !url.endsWith("manifest.json"))
-	assert.equal(new Set(mapFiles).size, DEFAULT_SEED_COUNT)
-})
-
-test("shuffle is driven by the injected random source", async () => {
-	// random() = 0 swaps every element to the front in turn: pool ends
-	// [frostwatch, drowned, skyforge, desert] → fetches the first two.
-	const requested = []
-	await loadDefaultBuildSeeds(fetcherFor(fixturesWithAllMaps(), requested), { random: () => 0 })
-	assert.deepEqual(requested.filter(url => !url.endsWith("manifest.json")), [
-		"/assets/default_maps/frostwatch_observatory.json",
-		"/assets/default_maps/drowned_temple_ruins.json",
-	])
+	assert.deepEqual(mapFiles, manifest.maps.map(map => `/assets/default_maps/${map.file}`))
 })
 
 test("keeps ground data on every seed", async () => {

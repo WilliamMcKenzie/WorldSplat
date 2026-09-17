@@ -5,7 +5,8 @@ import { getConfig } from "/scripts/api.js"
 import { captureWorld, projectCaptureBoxes, FRONT_THETA, FRONT_PHI } from "/scripts/capture.js?v=tight-crop-1"
 import { getAccount, saveTabs, listJobs, getJob, jobAsset, submitRender, logout, sessionToken } from "/scripts/backend.js"
 import { createTabSync } from "/scripts/tab-sync.js"
-import { renderWorkspaceTabs } from "/scripts/workspace-tabs.js"
+import { loadDefaultBuildSeeds } from "/scripts/default-builds.js?v=canvas-examples-1"
+import { renderWorkspaceTabs, updateWorkspaceTabETAs } from "/scripts/workspace-tabs.js?v=stage-eta-1"
 import { sceneGenerationPrompt } from "/scripts/generation-prompt.js"
 import { createGenerationImageDebugger } from "/scripts/generation-debug-images.js?v=flux-preview-1"
 import { fitSplatToBox } from "/scripts/fit.js?v=wisp-cull-2"
@@ -2633,34 +2634,24 @@ function syncWorldState() {
 
 function allWorkspaceFrames() { return [...frames.build, ...frames.view].sort((a, b) => a.id - b.id) }
 function activeWorkspaceFrame() { return frames[uiTab === "build" ? "build" : "view"].find(f => f.id === activeFrameId[uiTab === "build" ? "build" : "view"]) }
+function splatFrameLoading(frame) { return Boolean(frame.jobId && !frame.records.length && frame.job?.status !== "failed" && !frame.loadError) }
 function renderFramesPanel() {
- const items = allWorkspaceFrames().map(f => ({ id: f.tabId, name: f.name, type: frames.build.includes(f) ? "build" : "splat", status: f.job?.status, dirty: persistenceReady && tabSync.isTabDirty(serializeTab(f)) }))
+ const items = allWorkspaceFrames().map(f => {
+  if (f.job?.status === "splatting") f.splatStartedAt ??= Date.parse(f.job.updated_at) || Date.now()
+  return { id: f.tabId, name: f.name, type: frames.build.includes(f) ? "build" : "splat", status: f.job?.status, createdAt: f.job?.created_at, splatStartedAt: f.splatStartedAt, loading: splatFrameLoading(f), dirty: persistenceReady && tabSync.isTabDirty(serializeTab(f)) }
+ })
  renderWorkspaceTabs(document.getElementById("workspace_tabs"), items, activeWorkspaceFrame()?.tabId, {
   add: () => addFrameForActiveTab().catch(error => setStatus(error.message)),
   select: id => { const f = allWorkspaceFrames().find(f => f.tabId === id); if (f) activateFrame(frames.build.includes(f) ? "build" : "view", f.id).catch(error => setStatus(error.message)) },
   close: id => { const f = allWorkspaceFrames().find(f => f.tabId === id); if (f) deleteFrame(frames.build.includes(f) ? "build" : "view", f.id).catch(error => setStatus(error.message)) },
-  rename: id => {
+  rename: (id, name) => {
    const f = allWorkspaceFrames().find(f => f.tabId === id); if (!f) return
-   const dialog = document.getElementById("rename_tab_dialog")
-   dialog.dataset.tabId = id
-   document.getElementById("rename_tab_input").value = f.name
-   dialog.showModal()
-   document.getElementById("rename_tab_input").select()
+   f.name = name
+   persistFramesSoon()
   },
  })
- updateSplatInfo()
  persistFramesSoon()
 }
-function updateSplatInfo() {
- const frame = activeWorkspaceFrame()
- const visible = uiTab !== "build" && frame
- document.getElementById("splat_info").classList.toggle("hidden", !visible)
- if (!visible) return
- const labels = { queued: "Queued — you can keep building in another tab.", rendering: "Adding detail to your scene…", splatting: "Creating your 3D splat…", completed: "Drag to orbit · scroll to zoom", failed: frame.job?.error || "This render could not be completed." }
- document.getElementById("splat_state").textContent = frame.loadError || (frame.loading ? "Loading your splat…" : labels[frame.job?.status] || "Checking render…")
- document.getElementById("splat_download").classList.toggle("hidden", frame.job?.status !== "completed")
-}
-
 // -- Build frames: snapshots of the whole block-out (prims + tiles + heights + paint). --
 
 function pushBuildFrame(name) {
@@ -2817,6 +2808,11 @@ async function activateFrame(tab, id) {
  if (generating || switchingFrame) return
  const frame = frames[tab].find(f => f.id === id)
  if (!frame) return
+ if (tab === "view" && frame.jobId && !frame.records.length) {
+  if (frame.job?.status === "failed") setStatus(frame.job.error || "This render could not be completed.")
+  else if (frame.loadError) loadSplatFrame(frame)
+  return
+ }
  if (activeFrameId[tab] === id && uiTab === tab) { if (tab === "view") await loadSplatFrame(frame); return }
  switchingFrame = true
  try {
@@ -2861,7 +2857,7 @@ async function deleteFrame(tab, id) {
  if (wasActive) {
   activeFrameId[tab] = 0
   if (tab === "view") world.generated = []
-  const next = list[Math.min(index, list.length - 1)] || frames.build.at(-1) || frames.view.at(-1)
+  const next = [list[Math.min(index, list.length - 1)], ...frames.build, ...frames.view].find(f => f && (frames.build.includes(f) || f.records.length))
   if (next) await activateFrame(frames.build.includes(next) ? "build" : "view", next.id)
   else { uiTab = "build"; await applyBuildSnapshot(emptyBuildSnapshot()); pushBuildFrame(); snapshotActiveBuildFrame() }
  }
@@ -2936,15 +2932,16 @@ async function restoreFramesState() {
   else if (t.type === "splat") frames.view.push({ id: ++frameSeq, tabId: t.id, name: t.name, jobId: t.job_id, records: [] })
  }
  if (!saved.length) return false
- const first = frames.build[0] || frames.view[0]
+ const first = frames.build[0]
+ if (!first) return false
  await activateFrame(frames.build.includes(first) ? "build" : "view", first.id)
  return true
 }
 async function loadSplatFrame(frame) {
- if (!frame.jobId || frame.loading) return
- frame.loading = true; frame.loadError = ""; updateSplatInfo()
+ if (!frame.jobId || frame.loading || frame.records.length) return
+ frame.loading = true; frame.loadError = ""; renderFramesPanel()
  try {
-  frame.job = await getJob(frame.jobId)
+  if (frame.job?.status !== "completed") frame.job = await getJob(frame.jobId)
   if (frame.job.status !== "completed" || frame.records.length) return
   const blob = await jobAsset(frame.jobId, "splat")
   const mesh = new SplatMesh({ fileBytes: new Uint8Array(await blob.arrayBuffer()), fileName: "splat.ply" })
@@ -2970,7 +2967,7 @@ async function loadSplatFrame(frame) {
    mesh.visible = uiTab === "view" && activeFrameId.view === frame.id
    if (mesh.visible) { world.generated = frame.records; orbit.target.copy(frame.camera.target); orbit.radius = frame.camera.radius; updateCamera(); syncWorldState(); applyUiTab() }
   } catch (error) { disposeObject(mesh); throw error }
- } catch (error) { frame.loadError = error.message }
+ } catch (error) { frame.loadError = error.message; setStatus(error.message) }
  finally { frame.loading = false; renderFramesPanel() }
 }
 let refreshingJobs = false
@@ -2978,11 +2975,14 @@ async function refreshPendingJobs() {
  if (refreshingJobs || !persistenceReady) return
  refreshingJobs = true
  try {
-  for (const frame of [...frames.view]) {
-   if (!frame.jobId || frame.loading || ["completed", "failed"].includes(frame.job?.status)) continue
-   try { frame.job = await getJob(frame.jobId); frame.loadError = ""; if (uiTab === "view" && activeFrameId.view === frame.id && frame.job.status === "completed") await loadSplatFrame(frame) }
-   catch (error) { frame.loadError = error.message }
-  }
+  await Promise.all(frames.view.map(async frame => {
+   if (!frame.jobId || frame.loading || frame.records.length || frame.loadError || frame.job?.status === "failed") return
+   try {
+    if (frame.job?.status !== "completed") frame.job = await getJob(frame.jobId)
+    if (frame.job.status === "completed") await loadSplatFrame(frame)
+    else if (frame.job.status === "failed") setStatus(frame.job.error || "This render could not be completed.")
+   } catch (error) { frame.loadError = error.message; setStatus(error.message) }
+  }))
   renderFramesPanel()
  } finally { refreshingJobs = false }
 }
@@ -6162,10 +6162,9 @@ async function generateWorld(prompt) {
   const job = await submitRender({ prompt: sceneGenerationPrompt(prompt, { hasGround }), snapshot: capture.guide, depth: capture.depthMap, wireframe: capture.wireframe, requestID: build.pendingRender.requestID })
   delete build.pendingRender
   let frame = frames.view.find(f => f.jobId === job.id)
-  if (!frame) { frame = { id: ++frameSeq, tabId: crypto.randomUUID(), name: `${build.name.slice(0, 40)} · Splat`, jobId: job.id, job, records: [] }; frames.view.push(frame) }
+  if (!frame) { frame = { id: ++frameSeq, tabId: crypto.randomUUID(), name: build.name, jobId: job.id, job, records: [] }; frames.view.push(frame) }
   renderFramesPanel()
-  generating = false
-  await activateFrame("view", frame.id)
+  refreshPendingJobs()
  } catch (error) { setStatus(error.message || "Could not render this build.") }
  finally { generating = false; splatting = false; hideProgress(); syncGenerateButton() }
 }
@@ -6865,14 +6864,6 @@ async function signOutAccount() {
  catch (error) { setStatus(error.message) }
 }
 els.googleSignOut?.addEventListener("click", signOutAccount)
-document.getElementById("rename_tab_cancel").addEventListener("click", () => document.getElementById("rename_tab_dialog").close())
-document.getElementById("rename_tab_form").addEventListener("submit", event => {
- event.preventDefault()
- const dialog = document.getElementById("rename_tab_dialog"), name = document.getElementById("rename_tab_input").value.trim()
- const frame = allWorkspaceFrames().find(f => f.tabId === dialog.dataset.tabId)
- if (!frame || !name) return
- frame.name = name; dialog.close(); renderFramesPanel()
-})
 els.chatPrompt.addEventListener("input", () => { if (uiTab === "build") { world.prompt = els.chatPrompt.value; persistFramesSoon() } })
 document.getElementById("open_renders")?.addEventListener("click", async () => {
  const dialog = document.getElementById("renders_dialog"), list = document.getElementById("account_renders")
@@ -6888,19 +6879,12 @@ document.getElementById("open_renders")?.addEventListener("click", async () => {
    button.addEventListener("click", async () => {
     let frame = frames.view.find(f => f.jobId === job.id)
     if (!frame) { if (allWorkspaceFrames().length >= 100) { setStatus("Close a tab before opening another render."); return }; frame = { id: ++frameSeq, tabId: crypto.randomUUID(), name: `Splat ${frames.view.length + 1}`, jobId: job.id, job, records: [] }; frames.view.push(frame) }
-    dialog.close(); await activateFrame("view", frame.id)
+    dialog.close(); renderFramesPanel(); refreshPendingJobs(); await activateFrame("view", frame.id)
    })
    list.append(button)
   }
  } catch (error) { list.textContent = error.message }
 })
-document.getElementById("splat_refresh").addEventListener("click", () => { const frame = activeWorkspaceFrame(); if (frame?.jobId) loadSplatFrame(frame) })
-document.getElementById("splat_download").addEventListener("click", async () => {
- const frame = activeWorkspaceFrame(); if (!frame?.jobId) return
- try { const blob = await jobAsset(frame.jobId,"splat"); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `${frame.name}.ply`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 10000) }
- catch (error) { setStatus(error.message) }
-})
-
 window.addEventListener("resize", () => {
 	camera.aspect = window.innerWidth / window.innerHeight
 	camera.updateProjectionMatrix()
@@ -6947,14 +6931,21 @@ setActiveTool("pointer")
 applyColor(activeColor)
 applyBrushScale(activeBrushScale)
 if (!(await restoreFramesState())) {
-	// A new account starts with one editable tab.
-	pushBuildFrame()
-	snapshotActiveBuildFrame()
+	if (!allWorkspaceFrames().length) {
+		const seeds = await loadDefaultBuildSeeds().catch(error => { setStatus(error.message); return [] })
+		frames.build.push({ id: ++frameSeq, tabId: crypto.randomUUID(), name: "Canvas", snapshot: emptyBuildSnapshot() })
+		for (const { name, prompt, prims } of seeds) frames.build.push({ id: ++frameSeq, tabId: crypto.randomUUID(), name, snapshot: { prims, baseGroundColor, prompt } })
+		if (frames.build.length) {
+			await activateFrame("build", frames.build[0].id)
+			if (getAccount()) { tabSync.queue(serializeTabs()); await tabSync.flush().catch(() => {}) }
+		}
+	}
+	if (!frames.build.length) { pushBuildFrame(); snapshotActiveBuildFrame() }
 }
 persistenceReady = true
 renderFramesPanel()
 refreshPendingJobs()
-setInterval(refreshPendingJobs, 4000)
+setInterval(() => { refreshPendingJobs(); updateWorkspaceTabETAs(document.getElementById("workspace_tabs")) }, 5000)
 applyUiTab()
 updateCamera()
 syncGenerateButton()

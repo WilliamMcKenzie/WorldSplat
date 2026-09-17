@@ -9,13 +9,15 @@ Build a block-out world in the browser and WorldSplat turns it into a 3D Gaussia
 
 ## Run locally
 
-For UI work, serve the static client and open http://localhost:3000/app/:
+For UI work, serve the static client and open http://localhost:8080/app/:
 
 ```sh
-python3 -m http.server 3000 --directory client
+python3 -m http.server 8080 --directory client
 ```
 
 The editor opens without sign-in or backend services. Signed-out edits last until reload; generating requires an authenticated backend and displays errors in the editor.
+
+On localhost port 8080, the client connects to the live backend at `https://worldsplat.app`. Open `http://localhost:8080/` to sign in; saves and generation use your live account. Add `http://localhost` and `http://localhost:8080` to Google's Authorized JavaScript origins, and append `http://localhost:8080` to Avalon's `WS_ALLOWED_ORIGINS` before restarting the service.
 
 For the Go backend, configure PostgreSQL, Redis, Temporal and `server/.env` following [server/README.md](server/README.md), then run `cd server && go run .` → http://localhost:8067.
 
@@ -33,9 +35,9 @@ npm run test:browser
 
 The app and API are deployed together at https://worldsplat.avalon.lagso.com. For a separate Vercel frontend, deploy with `npx vercel deploy --prod` and set `.env.example` variables; add that frontend origin to the backend's `WS_ALLOWED_ORIGINS`.
 
-In Google Cloud, configure a Web application client with Authorized JavaScript origins for each frontend you use, such as `https://worldsplat.avalon.lagso.com`, `https://worldsplat.vercel.app`, and `http://localhost:3000`. Leave Authorized redirect URIs empty: the native Google Identity Services button uses a popup and JavaScript callback. No Google client secret is needed.
+In Google Cloud, configure a Web application client with Authorized JavaScript origins for each frontend you use, such as `https://worldsplat.avalon.lagso.com`, `https://worldsplat.vercel.app`, and `http://localhost:8080`. Leave Authorized redirect URIs empty: the native Google Identity Services button uses a popup and JavaScript callback. No Google client secret is needed.
 
-The top bar contains only native daisyUI `tabs tabs-lift` tabs. New accounts start with one Build 1 tab; saved account tabs are restored. Arrow keys, Home and End navigate tabs. Render creates a splat tab immediately, with progress and PLY download in the viewer. Ctrl+S or Cmd+S saves only the current tab; edits do not autosave. The selected tab shows an unsaved dot, replaced by a close button once saved when more than one tab is open. Save failures keep the dot visible until an explicit retry succeeds. Concurrent browser windows use last-write-wins saves. Google sign-in uses a black daisyUI button container matching the earlier landing-page button dimensions.
+The top bar contains only native daisyUI `tabs tabs-lift` tabs. New accounts start with a blank Canvas tab followed by Example 1 through Example 4, seeded from every bundled default scene and saved once; existing account tabs are restored. Arrow keys, Home and End navigate tabs. Render creates a disabled splat tab immediately, showing a red spinner and a stage-based ETA until the splat is ready. Double-click a ready tab name to rename it inline. Ctrl+S or Cmd+S saves only the current tab; edits do not autosave. The selected tab shows an unsaved dot, replaced by a close button once saved when more than one tab is open. Save failures keep the dot visible until an explicit retry succeeds. Concurrent browser windows use last-write-wins saves. Google sign-in uses a black daisyUI button container matching the earlier landing-page button dimensions.
 
 Self-hosted container:
 

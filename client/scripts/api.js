@@ -2,9 +2,12 @@
 // generation still proceeds with defaults.
 export async function getConfig() {
 	try {
-		const response = await fetch("/api/config")
+		const apiBaseURL = ["localhost", "127.0.0.1"].includes(location.hostname) && location.port === "8080" ? "https://worldsplat.app" : ""
+		const response = await fetch(`${apiBaseURL}/api/config`)
 		if (!response.ok) return {}
-		return await response.json()
+		const config = await response.json()
+		if (apiBaseURL && config.backend) config.backend.apiBaseURL = apiBaseURL
+		return config
 	} catch {
 		return {}
 	}
