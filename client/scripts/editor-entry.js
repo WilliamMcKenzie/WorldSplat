@@ -6,4 +6,4 @@ try {
 } catch (error) {
  console.warn("Account unavailable:", error)
 }
-await import("/scripts/renderer.js?v=canvas-examples-1")
+await import("/scripts/renderer.js?v=canvas-examples-2")
