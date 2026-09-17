@@ -1,27 +1,58 @@
-# WorldSplat
+<img src=".github/assets/worldsplat-wordmark.png" width="252" alt="worldsplat">
 
-Build a block-out world in the browser and WorldSplat turns it into a 3D Gaussian splat: the block-out render is detailed into an image with FLUX, then reconstructed into a splat with TripoSplat. Sign in with Google, edit independent build tabs, and generate view-only splat tabs. Tabs and render history are saved to your account in PostgreSQL. The Go backend runs fal → TripoSplat through Temporal; provider credentials stay on the server.
+**Build anything, bring it to life.**
 
-- `client/` — the whole app as a static site, no build step.
-- `api/` — two serverless functions: `/api/config` (public runtime config) and `/healthz`.
-- `server/` — Go API and Temporal worker, with PostgreSQL/Redis persistence and private asset storage. See [server setup and API contract](server/README.md).
-- `fixtures/` — dev-only session ZIPs for testing splat flows without spending GPU quota. Not deployed.
+Sketch a world with simple 3D shapes, describe the look, and turn it into a detailed Gaussian splat you can explore in your browser.
+
+[Try WorldSplat](https://worldsplat.app) · [Watch the trailer](.github/assets/worldsplat-trailer.mp4) · [Run locally](#run-locally)
+
+[![WorldSplat demo: building a courtyard from blocks, generating a detailed scene, and exploring the result](.github/assets/worldsplat-demo.gif)](.github/assets/worldsplat-trailer.mp4)
+
+## Make a world
+
+1. **Block it out.** Paint the ground and arrange shapes, or start from one of four example scenes.
+2. **Give it a look.** Write a prompt and generate a detailed 3D splat from your scene.
+3. **Explore and keep building.** Move around the result, try another version, and save your worlds to your account.
+
+| Feature | What you can do |
+| --- | --- |
+| **Browser editor** | Build, paint, and adjust your scene without installing anything. |
+| **Separate workspaces** | Keep blockouts and generated splats in their own tabs. |
+| **Saved worlds** | Sign in with Google and save with Ctrl/Cmd + S. |
+| **Session exports** | Download splats and primitives together as a ZIP, then load them back into the editor. |
 
 ## Run locally
 
-For UI work, serve the static client and open http://localhost:8080/app/:
+The frontend is a static site with no build step. To work on the editor:
 
 ```sh
-python3 -m http.server 8080 --directory client
+python3 -m http.server 3000 --directory client
 ```
 
-The editor opens without sign-in or backend services. Signed-out edits last until reload; generating requires an authenticated backend and displays errors in the editor.
+Open [localhost:3000/app/](http://localhost:3000/app/). You can edit without signing in; signed-out changes last until reload. Saving to an account and generating splats require the backend.
 
-On localhost port 8080, the client connects to the live backend at `https://worldsplat.app`. Open `http://localhost:8080/` to sign in; saves and generation use your live account. Add `http://localhost` and `http://localhost:8080` to Google's Authorized JavaScript origins, and append `http://localhost:8080` to Avalon's `WS_ALLOWED_ORIGINS` before restarting the service.
+For the full app, follow the [backend setup](server/README.md#run). It requires Go 1.26+, PostgreSQL, Redis, Temporal, Google sign-in, and access to the image and splat providers. The Go server serves both the client and API at [localhost:8067](http://localhost:8067).
 
-For the Go backend, configure PostgreSQL, Redis, Temporal and `server/.env` following [server/README.md](server/README.md), then run `cd server && go run .` → http://localhost:8067.
+<details>
+<summary>Use the hosted backend for frontend development</summary>
 
-## Tests
+Serve the client on **port 8080** to connect to `https://worldsplat.app`, then open [localhost:8080](http://localhost:8080/) to sign in. Saves and generations use your live account. Add `http://localhost:8080` to Google's Authorized JavaScript origins and the backend's `WS_ALLOWED_ORIGINS` before using this mode.
+
+</details>
+
+## Under the hood
+
+WorldSplat renders your blockout, details the image through fal, then reconstructs it with TripoSplat. A Go backend runs generation jobs through Temporal, stores worlds in PostgreSQL, and manages sessions in Redis.
+
+| Code | Purpose |
+| --- | --- |
+| [`client/`](client/) | Static editor and splat viewer, built with JavaScript and Three.js. |
+| [`server/`](server/) | Go API, generation worker, authentication, and storage. |
+
+See the [backend README](server/README.md) for configuration, API endpoints, and deployment details.
+
+<details>
+<summary>Tests</summary>
 
 ```sh
 (cd server && go test -race ./...)
@@ -31,19 +62,20 @@ npx playwright install --with-deps chromium
 npm run test:browser
 ```
 
-## Deploy
+</details>
 
-The app and API are deployed together at https://worldsplat.avalon.lagso.com. For a separate Vercel frontend, deploy with `npx vercel deploy --prod` and set `.env.example` variables; add that frontend origin to the backend's `WS_ALLOWED_ORIGINS`.
+<details>
+<summary>Self-hosting</summary>
 
-In Google Cloud, configure a Web application client with Authorized JavaScript origins for each frontend you use, such as `https://worldsplat.avalon.lagso.com`, `https://worldsplat.vercel.app`, and `http://localhost:8080`. Leave Authorized redirect URIs empty: the native Google Identity Services button uses a popup and JavaScript callback. No Google client secret is needed.
-
-The top bar contains only native daisyUI `tabs tabs-lift` tabs. New accounts start with a blank Canvas tab followed by Example 1 through Example 4, seeded from every bundled default scene and saved once; existing account tabs are restored. Arrow keys, Home and End navigate tabs. Render creates a disabled splat tab immediately, showing a red spinner and a stage-based ETA until the splat is ready. Double-click a ready tab name to rename it inline. Ctrl+S or Cmd+S saves only the current tab; edits do not autosave. The selected tab shows an unsaved dot, replaced by a close button once saved when more than one tab is open. Save failures keep the dot visible until an explicit retry succeeds. Concurrent browser windows use last-write-wins saves. Google sign-in uses a black daisyUI button container matching the earlier landing-page button dimensions.
-
-Self-hosted container:
+Configure `server/.env` using the [backend setup](server/README.md#run), then:
 
 ```sh
 docker build -t worldsplat .
-docker run --rm -p 8067:8067 --env-file server/.env -v worldsplat-data:/app/output worldsplat
+docker run --rm -p 8067:8067 --env-file server/.env -e WS_ADDR=:8067 -v worldsplat-data:/app/output worldsplat
 ```
 
-Container dependency addresses must be reachable from the container; `127.0.0.1` refers to the container itself. Set `WS_ADDR=:8067` for published Docker ports.
+Dependency addresses must be reachable from inside the container; `127.0.0.1` refers to the container itself.
+
+For a separate Vercel frontend, configure the variables in [`.env.example`](.env.example), deploy with `npx vercel deploy --prod`, and add its origin to the backend's `WS_ALLOWED_ORIGINS`. Add each frontend's exact origin to Google's Authorized JavaScript origins; sign-in uses a popup and needs no redirect URI or Google client secret.
+
+</details>
