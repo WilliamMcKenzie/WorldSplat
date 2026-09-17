@@ -2650,6 +2650,7 @@ function renderFramesPanel() {
    persistFramesSoon()
   },
  })
+ syncGenerateButton()
  persistFramesSoon()
 }
 // -- Build frames: snapshots of the whole block-out (prims + tiles + heights + paint). --
@@ -3019,9 +3020,11 @@ function yieldForProgressPaint() {
 }
 
 function syncGenerateButton() {
-	els.generate.disabled = generating
-	els.generate.classList.toggle("is-disabled", generating)
-	els.generate.title = generating ? "Generating…" : "Render this build"
+	const busy = generating || frames.view.some(splatFrameLoading)
+	els.chatPrompt.disabled = busy
+	els.generate.disabled = busy
+	els.generate.classList.toggle("is-disabled", busy)
+	els.generate.title = busy ? "Generating…" : "Render this build"
 	els.generate.setAttribute("aria-label", "Generate world")
 	// Make the frozen state visible: not-allowed cursor over both canvases, and no
 	// placement affordance left glowing.

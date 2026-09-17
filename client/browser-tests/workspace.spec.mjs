@@ -49,6 +49,8 @@ test('render submits three PNGs and disables pending splat tabs while builds sta
  await page.getByRole('button',{name:'Generate world',exact:true}).click()
  await expect(page.getByRole('tab',{name:/Courtyard, splat/})).toHaveAttribute('aria-disabled','true',{timeout:60000})
  await expect(page.getByRole('tab',{name:/Courtyard, splat/}).locator('.tab-spinner')).toBeVisible()
+ await expect(page.locator('#chat_prompt')).toBeDisabled()
+ await expect(page.getByRole('button',{name:'Generate world',exact:true})).toBeDisabled()
  await expect(page.getByRole('tab',{name:/Courtyard, build/})).toHaveAttribute('aria-selected','true')
  expect(state.uploads).toHaveLength(1)
  const request=state.uploads[0];expect(request.headers()['authorization']).toBe('Bearer test-session-token');expect(request.headers()['idempotency-key']).toBeTruthy()
@@ -61,6 +63,8 @@ test('render submits three PNGs and disables pending splat tabs while builds sta
  await expect(page.getByRole('tab',{name:/Courtyard, build/})).toHaveAttribute('aria-selected','true')
  state.jobs[0].status='failed';state.jobs[0].error='Insufficient provider credits'
  await expect(page.locator('#status')).toContainText('Insufficient provider credits',{timeout:15000})
+ await expect(page.locator('#chat_prompt')).toBeEnabled()
+ await expect(page.getByRole('button',{name:'Generate world',exact:true})).toBeEnabled()
 })
 test('completed splat tabs stay disabled until PLY bytes load and restore after reload',async({page})=>{
  const state=await workspace(page)
